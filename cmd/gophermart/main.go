@@ -1,9 +1,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/logger"
-	"log"
 )
 
 func main() {
@@ -19,5 +20,4 @@ func main() {
 	defer func() {
 		_ = logger.Log.Sync()
 	}()
-
 }
