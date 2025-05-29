@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,7 @@ import (
 func TestServer_Register(t *testing.T) {
 	t.Parallel()
 
-	s := NewServer()
+	s := NewServer(&config.Config{})
 	s.mountHandlers()
 
 	type want struct {

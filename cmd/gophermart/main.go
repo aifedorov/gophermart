@@ -5,6 +5,7 @@ import (
 
 	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/logger"
+	"github.com/aifedorov/gophermart/internal/server"
 )
 
 func main() {
@@ -20,4 +21,7 @@ func main() {
 	defer func() {
 		_ = logger.Log.Sync()
 	}()
+
+	s := server.NewServer(cfg)
+	s.Run()
 }

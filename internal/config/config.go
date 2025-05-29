@@ -10,7 +10,7 @@ import (
 const dotEnvFile = ".env"
 
 type Config struct {
-	ListenAddress        string `env:"RUN_ADDRESS" envDefault:":8080"`
+	ListenAddress        string `env:"RUN_ADDRESS" envDefault:"localhost:8080"`
 	StorageDSN           string `env:"DATABASE_URI,required,notEmpty"`
 	AccrualSystemAddress string `env:"ACCRUAL_SYSTEM_ADDRESS" envDefault:":8081"`
 	LogLevel             string `env:"LOG_LEVEL" envDefault:"info"`
