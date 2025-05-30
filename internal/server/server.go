@@ -9,6 +9,7 @@ import (
 
 	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/logger"
+	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/server/handlers"
 	"github.com/aifedorov/gophermart/internal/server/middleware"
 )
@@ -16,12 +17,14 @@ import (
 type Server struct {
 	router *chi.Mux
 	config *config.Config
+	repo   repository.Repository
 }
 
-func NewServer(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config, repo repository.Repository) *Server {
 	return &Server{
 		router: chi.NewRouter(),
 		config: cfg,
+		repo:   repo,
 	}
 }
 
@@ -41,5 +44,5 @@ func (s *Server) mountHandlers() {
 	s.router.Use(middleware.RequestLogger)
 	s.router.Use(middleware.ResponseLogger)
 
-	s.router.Post("/api/user/register", handlers.NewRegisterHandler())
+	s.router.Post("/api/user/register", handlers.NewRegisterHandler(s.repo))
 }

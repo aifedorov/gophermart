@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/aifedorov/gophermart/internal/repository"
 	"log"
 
 	"github.com/aifedorov/gophermart/internal/config"
@@ -22,6 +23,6 @@ func main() {
 		_ = logger.Log.Sync()
 	}()
 
-	s := server.NewServer(cfg)
+	s := server.NewServer(cfg, repository.NewInMemoryStorage())
 	s.Run()
 }

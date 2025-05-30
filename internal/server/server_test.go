@@ -1,19 +1,25 @@
 package server
 
 import (
-	"github.com/aifedorov/gophermart/internal/config"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/aifedorov/gophermart/internal/config"
+	"github.com/aifedorov/gophermart/internal/repository"
+	"github.com/aifedorov/gophermart/internal/repository/mocks"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestServer_Register(t *testing.T) {
 	t.Parallel()
 
-	s := NewServer(&config.Config{})
-	s.mountHandlers()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	s := newMockServer(ctrl)
 
 	type want struct {
 		contentType string
@@ -102,4 +108,43 @@ func TestServer_Register(t *testing.T) {
 			}
 		})
 	}
+}
+
+func newMockServer(ctrl *gomock.Controller) *Server {
+	s := NewServer(newMockConfig(), newMockStorage(ctrl))
+	s.mountHandlers()
+	return s
+}
+
+func newMockConfig() *config.Config {
+	return &config.Config{
+		ListenAddress:        "localhost:8080",
+		StorageDSN:           "postgres://test",
+		AccrualSystemAddress: "localhost:8081",
+		LogLevel:             "debug",
+	}
+}
+
+func newMockStorage(ctrl *gomock.Controller) repository.Repository {
+	mockRepo := mocks.NewMockRepository(ctrl)
+
+	mockRepo.EXPECT().
+		StoreUser("loginExists", gomock.Any()).
+		Return(repository.ErrAlreadyExists).
+		AnyTimes()
+
+	mockRepo.EXPECT().
+		StoreUser("test", "test").
+		Return(nil).AnyTimes()
+
+	mockRepo.EXPECT().
+		StoreUser("", gomock.Any()).
+		Return(repository.ErrNotFound).AnyTimes()
+
+	mockRepo.EXPECT().
+		StoreUser(gomock.Any(), "").
+		Return(repository.ErrNotFound).
+		AnyTimes()
+
+	return mockRepo
 }

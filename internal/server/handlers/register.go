@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/aifedorov/gophermart/internal/logger"
+	"github.com/aifedorov/gophermart/internal/repository"
 	"go.uber.org/zap"
 	"net/http"
 )
 
-func NewRegisterHandler() http.HandlerFunc {
+func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -23,9 +25,9 @@ func NewRegisterHandler() http.HandlerFunc {
 			return
 		}
 
-		// TODO: Check storage for existing login
-		if body.Login == "loginExists" {
-			logger.Log.Info("login already exists")
+		err = repo.StoreUser(body.Login, body.Password)
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			logger.Log.Info("login already exists", zap.String("login", body.Login))
 			http.Error(rw, "login already exists", http.StatusConflict)
 			return
 		}
