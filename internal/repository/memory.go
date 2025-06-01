@@ -26,20 +26,24 @@ func (ms *InMemoryStorage) StoreUser(login, password string) error {
 		return ErrAlreadyExists
 	}
 	ms.users[login] = User{
-		ID:       uuid.New(),
+		ID:       uuid.NewString(),
 		Login:    login,
 		Password: password,
 	}
 	return nil
 }
 
-func (ms *InMemoryStorage) FetchUser(login string) (User, error) {
+func (ms *InMemoryStorage) FetchUser(login, password string) (User, error) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
 
 	user, ok := ms.users[login]
 	if !ok {
 		return User{}, ErrNotFound
+	}
+	// TODO: Use hash function instead of comparing passwords directly.
+	if user.Password != password {
+		return User{}, ErrInvalidateCredentials
 	}
 	return user, nil
 }

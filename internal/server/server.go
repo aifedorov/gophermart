@@ -45,4 +45,5 @@ func (s *Server) mountHandlers() {
 	s.router.Use(middleware.ResponseLogger)
 
 	s.router.Post("/api/user/register", handlers.NewRegisterHandler(s.repo))
+	s.router.Post("/api/user/login", handlers.NewLoginHandler(s.repo))
 }

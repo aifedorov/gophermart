@@ -41,18 +41,18 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // FetchUser mocks base method.
-func (m *MockRepository) FetchUser(login string) (repository.User, error) {
+func (m *MockRepository) FetchUser(login, password string) (repository.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchUser", login)
+	ret := m.ctrl.Call(m, "FetchUser", login, password)
 	ret0, _ := ret[0].(repository.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FetchUser indicates an expected call of FetchUser.
-func (mr *MockRepositoryMockRecorder) FetchUser(login any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) FetchUser(login, password any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchUser", reflect.TypeOf((*MockRepository)(nil).FetchUser), login)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchUser", reflect.TypeOf((*MockRepository)(nil).FetchUser), login, password)
 }
 
 // StoreUser mocks base method.

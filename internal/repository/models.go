@@ -1,9 +1,7 @@
 package repository
 
-import "github.com/google/uuid"
-
 type User struct {
-	ID       uuid.UUID
+	ID       string
 	Login    string
 	Password string
 }

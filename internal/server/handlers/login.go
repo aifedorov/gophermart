@@ -2,15 +2,14 @@ package handlers
 
 import (
 	"errors"
+	"github.com/aifedorov/gophermart/internal/logger"
+	"go.uber.org/zap"
 	"net/http"
 
-	"go.uber.org/zap"
-
-	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/repository"
 )
 
-func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
+func NewLoginHandler(repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -27,16 +26,15 @@ func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		err = repo.StoreUser(body.Login, body.Password)
-		if errors.Is(err, repository.ErrAlreadyExists) {
-			logger.Log.Info("login already exists", zap.String("login", body.Login))
-			http.Error(rw, "login already exists", http.StatusConflict)
+		_, err = repo.FetchUser(body.Login, body.Password)
+		if errors.Is(err, repository.ErrInvalidateCredentials) || errors.Is(err, repository.ErrNotFound) {
+			logger.Log.Info("invalid login or password")
+			http.Error(rw, "invalid login or password", http.StatusUnauthorized)
 			return
 		}
 		if err != nil {
 			logger.Log.Error("failed to fetch user", zap.Error(err))
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
 		}
 
 		// TODO: Set cookies
