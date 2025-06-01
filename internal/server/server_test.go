@@ -64,10 +64,12 @@ func (suite *ServerTestSuite) TestUserRegistrationThenLogin() {
 	// 1. Register user
 	resp := suite.registerUser(login, pass)
 	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
 
 	// 2. Login user
 	resp = suite.loginUser(login, pass)
 	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
 }
 
 func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
@@ -93,6 +95,7 @@ func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
 	// 1. Create order
 	resp := suite.createOrder(orderNumber)
 	suite.Equal(http.StatusAccepted, resp.StatusCode)
+	_ = resp.Body.Close()
 
 	// 2. Get orders
 	resp = suite.getOrders()
@@ -104,6 +107,7 @@ func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
 	suite.Require().NoError(err)
 	suite.Equal(1, len(orders))
 	suite.Equal(orderNumber, orders[0].Number)
+	_ = resp.Body.Close()
 }
 
 // Helper methods
