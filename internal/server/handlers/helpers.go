@@ -24,3 +24,7 @@ func decodeRequest(r *http.Request) (RegisterRequestBody, error) {
 	}
 	return body, nil
 }
+
+func isValidCredentials(login, password string) bool {
+	return login != "" && password != ""
+}

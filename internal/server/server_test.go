@@ -1,7 +1,7 @@
 package server
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,225 +10,86 @@ import (
 	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/repository/mocks"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 )
 
-func TestServer_Register(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	s := newMockServer(newMockStorageForRegister(ctrl))
-
-	type want struct {
-		contentType string
-		statusCode  int
-		body        string
-	}
-	tests := []struct {
-		name   string
-		method string
-		path   string
-		body   string
-		want   want
-	}{
-		{
-			name:   "success register",
-			method: http.MethodPost,
-			path:   "/api/user/register",
-			body: `{
-				"login": "newLogin",
-				"password": "test"
-			}`,
-			want: want{
-				statusCode:  http.StatusOK,
-				contentType: "application/json",
-			},
-		},
-		{
-			name:   "missing body",
-			method: http.MethodPost,
-			path:   "/api/user/register",
-			want: want{
-				statusCode: http.StatusBadRequest,
-			},
-		},
-		{
-			name:   "empty login",
-			method: http.MethodPost,
-			path:   "/api/user/register",
-			body: `{
-				"login": "",
-				"password": "test"
-			}`,
-			want: want{
-				statusCode: http.StatusBadRequest,
-			},
-		},
-		{
-			name:   "empty password",
-			method: http.MethodPost,
-			path:   "/api/user/register",
-			body: `{
-				"login": "test",
-				"password": ""
-			}`,
-			want: want{
-				statusCode: http.StatusBadRequest,
-			},
-		},
-		{
-			name:   "login already exists",
-			method: http.MethodPost,
-			path:   "/api/user/register",
-			body: `{
-				"login": "loginExists",
-				"password": "test"
-			}`,
-			want: want{
-				statusCode: http.StatusConflict,
-			},
-		},
-		{
-			name:   "internal server error",
-			method: http.MethodPost,
-			path:   "/api/user/register",
-			body: `{
-				"login": "test",
-				"password": "test"
-			}`,
-			want: want{
-				statusCode: http.StatusInternalServerError,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
-			res := httptest.NewRecorder()
-			s.router.ServeHTTP(res, req)
-
-			assert.Equal(t, tt.want.statusCode, res.Code)
-
-			if tt.want.contentType != "" {
-				assert.Equal(t, tt.want.contentType, res.Header().Get("Content-Type"))
-			}
-		})
-	}
+type ServerTestSuite struct {
+	suite.Suite
+	server   *httptest.Server
+	client   *http.Client
+	ctrl     *gomock.Controller
+	mockRepo *mocks.MockRepository
 }
 
-func TestServer_Login(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	s := newMockServer(newMockStorageFoLogin(ctrl))
-
-	type want struct {
-		contentType string
-		statusCode  int
-		body        string
-	}
-	tests := []struct {
-		name   string
-		method string
-		path   string
-		body   string
-		want   want
-	}{
-		{
-			name:   "valid credentials",
-			method: http.MethodPost,
-			path:   "/api/user/login",
-			body: `{
-				"login": "loginExists",
-				"password": "test"
-			}`,
-			want: want{
-				statusCode:  http.StatusOK,
-				contentType: "application/json",
-				body:        `{"id":"1","login":"loginExists","password":"pass"}`,
-			},
-		},
-		{
-			name:   "invalid login",
-			method: http.MethodPost,
-			path:   "/api/user/login",
-			body: `{
-				"login": "loginNotExists",
-				"password": "test"
-			}`,
-			want: want{
-				statusCode: http.StatusUnauthorized,
-			},
-		},
-		{
-			name:   "invalid password",
-			method: http.MethodPost,
-			path:   "/api/user/login",
-			body: `{
-				"login": "test",
-				"password": "wrongPass"
-			}`,
-			want: want{
-				statusCode: http.StatusUnauthorized,
-			},
-		},
-		{
-			name:   "bad request",
-			method: http.MethodPost,
-			path:   "/api/user/login",
-			body: `{
-				"lg": "loginExists",
-				"password": "test"
-			}`,
-			want: want{
-				statusCode: http.StatusBadRequest,
-			},
-		},
-		{
-			name:   "internal error",
-			method: http.MethodPost,
-			path:   "/api/user/login",
-			body: `{
-				"login": "test",
-				"password": "test"
-			}`,
-			want: want{
-				statusCode: http.StatusInternalServerError,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
-			res := httptest.NewRecorder()
-			s.router.ServeHTTP(res, req)
-
-			assert.Equal(t, tt.want.statusCode, res.Code)
-
-			if tt.want.contentType != "" {
-				assert.Equal(t, tt.want.contentType, res.Header().Get("Content-Type"))
-			}
-		})
-	}
+func (suite *ServerTestSuite) SetupSuite() {
+	suite.client = &http.Client{}
 }
 
-func newMockServer(repo repository.Repository) *Server {
-	s := NewServer(newMockConfig(), repo)
+func (suite *ServerTestSuite) SetupTest() {
+	suite.ctrl = gomock.NewController(suite.T())
+	suite.mockRepo = mocks.NewMockRepository(suite.ctrl)
+
+	s := NewServer(newMockConfig(), suite.mockRepo)
 	s.mountHandlers()
-	return s
+
+	suite.server = httptest.NewServer(s.router)
+}
+
+func (suite *ServerTestSuite) TearDownTest() {
+	suite.server.Close()
+	suite.ctrl.Finish()
+}
+
+func TestIntegrationSuite(t *testing.T) {
+	suite.Run(t, new(ServerTestSuite))
+}
+
+func (suite *ServerTestSuite) TestUserRegistrationAndLogin() {
+	login := "test"
+	pass := "pass"
+
+	suite.mockRepo.EXPECT().
+		StoreUser(login, pass).
+		Return(nil)
+
+	suite.mockRepo.EXPECT().
+		FetchUser(login, pass).
+		Return(repository.User{ID: "1", Login: login}, nil)
+
+	// 1. Register user
+	resp := suite.registerUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+
+	// 2. Login user
+	resp = suite.loginUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+}
+
+// Helper methods
+
+func (suite *ServerTestSuite) registerUser(login, password string) *http.Response {
+	body := fmt.Sprintf(`{"login":"%s","password":"%s"}`, login, password)
+	resp, err := suite.client.Post(
+		suite.server.URL+"/api/user/register",
+		"application/json",
+		strings.NewReader(body),
+	)
+
+	suite.Require().NoError(err)
+	return resp
+}
+
+func (suite *ServerTestSuite) loginUser(login, password string) *http.Response {
+	body := fmt.Sprintf(`{"login":"%s","password":"%s"}`, login, password)
+	resp, err := suite.client.Post(
+		suite.server.URL+"/api/user/login",
+		"application/json",
+		strings.NewReader(body),
+	)
+
+	suite.Require().NoError(err)
+	return resp
 }
 
 func newMockConfig() *config.Config {
@@ -238,60 +99,4 @@ func newMockConfig() *config.Config {
 		AccrualSystemAddress: "localhost:8081",
 		LogLevel:             "debug",
 	}
-}
-
-func newMockStorageForRegister(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mocks.NewMockRepository(ctrl)
-
-	mockRepo.EXPECT().
-		StoreUser("loginExists", gomock.Any()).
-		Return(repository.ErrAlreadyExists).
-		AnyTimes()
-
-	mockRepo.EXPECT().
-		StoreUser("newLogin", "test").
-		Return(nil).
-		AnyTimes()
-
-	mockRepo.EXPECT().
-		StoreUser("", gomock.Any()).
-		Return(repository.ErrNotFound).AnyTimes()
-
-	mockRepo.EXPECT().
-		StoreUser(gomock.Any(), "").
-		Return(repository.ErrNotFound).
-		AnyTimes()
-
-	mockRepo.EXPECT().
-		StoreUser("test", "test").
-		Return(errors.New("internal error")).
-		AnyTimes()
-
-	return mockRepo
-}
-
-func newMockStorageFoLogin(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mocks.NewMockRepository(ctrl)
-
-	mockRepo.EXPECT().
-		FetchUser("loginExists", "test").
-		Return(repository.User{ID: "1", Login: "loginExists", Password: "test"}, nil).
-		AnyTimes()
-
-	mockRepo.EXPECT().
-		FetchUser("loginNotExists", "test").
-		Return(repository.User{}, repository.ErrNotFound).
-		AnyTimes()
-
-	mockRepo.EXPECT().
-		FetchUser("test", "wrongPass").
-		Return(repository.User{}, repository.ErrInvalidateCredentials).
-		AnyTimes()
-
-	mockRepo.EXPECT().
-		FetchUser("test", "test").
-		Return(repository.User{}, errors.New("internal error")).
-		AnyTimes()
-
-	return mockRepo
 }

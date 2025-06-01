@@ -21,7 +21,7 @@ func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		if body.Login == "" || body.Password == "" {
+		if !isValidCredentials(body.Login, body.Password) {
 			logger.Log.Info("empty login or password")
 			http.Error(rw, "empty login or password", http.StatusBadRequest)
 			return
