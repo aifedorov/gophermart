@@ -55,6 +55,18 @@ func TestServer_Register(t *testing.T) {
 			},
 		},
 		{
+			name:   "invalid json body",
+			method: http.MethodPost,
+			path:   "/api/user/login",
+			body: `{
+				"login: "loginExists",
+				"password": "test"
+			}`,
+			want: want{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
 			name:   "empty login",
 			method: http.MethodPost,
 			path:   "/api/user/register",
@@ -126,26 +138,26 @@ func newMockStorageForRegister(ctrl *gomock.Controller) repository.Repository {
 	mockRepo := mocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
-		StoreUser("loginExists", gomock.Any()).
+		CreateUser("loginExists", gomock.Any()).
 		Return(repository.ErrAlreadyExists).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		StoreUser("newLogin", "test").
+		CreateUser("newLogin", "test").
 		Return(nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		StoreUser("", gomock.Any()).
+		CreateUser("", gomock.Any()).
 		Return(repository.ErrNotFound).AnyTimes()
 
 	mockRepo.EXPECT().
-		StoreUser(gomock.Any(), "").
+		CreateUser(gomock.Any(), "").
 		Return(repository.ErrNotFound).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		StoreUser("test", "test").
+		CreateUser("test", "test").
 		Return(errors.New("internal error")).
 		AnyTimes()
 

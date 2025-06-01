@@ -86,6 +86,18 @@ func TestLoginHandler(t *testing.T) {
 			},
 		},
 		{
+			name:   "invalid json body",
+			method: http.MethodPost,
+			path:   "/api/user/login",
+			body: `{
+				"login: "loginExists",
+				"password": "test"
+			}`,
+			want: want{
+				statusCode: http.StatusBadRequest,
+			},
+		},
+		{
 			name:   "internal error",
 			method: http.MethodPost,
 			path:   "/api/user/login",
@@ -121,22 +133,22 @@ func newMockStorageForLogin(ctrl *gomock.Controller) repository.Repository {
 	mockRepo := mocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
-		FetchUser("loginExists", "test").
+		GetUserByCredentials("loginExists", "test").
 		Return(repository.User{ID: "1", Login: "loginExists", Password: "test"}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		FetchUser("loginNotExists", "test").
+		GetUserByCredentials("loginNotExists", "test").
 		Return(repository.User{}, repository.ErrNotFound).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		FetchUser("test", "wrongPass").
+		GetUserByCredentials("test", "wrongPass").
 		Return(repository.User{}, repository.ErrInvalidateCredentials).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		FetchUser("test", "test").
+		GetUserByCredentials("test", "test").
 		Return(repository.User{}, errors.New("internal error")).
 		AnyTimes()
 

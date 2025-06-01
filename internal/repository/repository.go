@@ -9,6 +9,8 @@ var (
 )
 
 type Repository interface {
-	StoreUser(login, password string) error
-	FetchUser(login, password string) (User, error)
+	CreateUser(login, password string) error
+	GetUserByCredentials(login, password string) (User, error)
+	CreateOrder(orderNumber string) error
+	GetOrders() ([]Order, error)
 }

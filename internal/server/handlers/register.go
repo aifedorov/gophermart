@@ -14,9 +14,9 @@ func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
-		body, err := decodeRequest(req)
+		body, err := decodeRegister(req)
 		if err != nil {
-			logger.Log.Error("failed to decode request", zap.Error(err))
+			logger.Log.Info("failed to decode request", zap.Error(err))
 			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
@@ -27,7 +27,7 @@ func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		err = repo.StoreUser(body.Login, body.Password)
+		err = repo.CreateUser(body.Login, body.Password)
 		if errors.Is(err, repository.ErrAlreadyExists) {
 			logger.Log.Info("login already exists", zap.String("login", body.Login))
 			http.Error(rw, "login already exists", http.StatusConflict)

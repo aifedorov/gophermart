@@ -40,31 +40,60 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
-// FetchUser mocks base method.
-func (m *MockRepository) FetchUser(login, password string) (repository.User, error) {
+// CreateOrder mocks base method.
+func (m *MockRepository) CreateOrder(orderNumber string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchUser", login, password)
+	ret := m.ctrl.Call(m, "CreateOrder", orderNumber)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateOrder indicates an expected call of CreateOrder.
+func (mr *MockRepositoryMockRecorder) CreateOrder(orderNumber any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrder", reflect.TypeOf((*MockRepository)(nil).CreateOrder), orderNumber)
+}
+
+// CreateUser mocks base method.
+func (m *MockRepository) CreateUser(login, password string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", login, password)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockRepositoryMockRecorder) CreateUser(login, password any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockRepository)(nil).CreateUser), login, password)
+}
+
+// GetOrders mocks base method.
+func (m *MockRepository) GetOrders() ([]repository.Order, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrders")
+	ret0, _ := ret[0].([]repository.Order)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrders indicates an expected call of GetOrders.
+func (mr *MockRepositoryMockRecorder) GetOrders() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrders", reflect.TypeOf((*MockRepository)(nil).GetOrders))
+}
+
+// GetUserByCredentials mocks base method.
+func (m *MockRepository) GetUserByCredentials(login, password string) (repository.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByCredentials", login, password)
 	ret0, _ := ret[0].(repository.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FetchUser indicates an expected call of FetchUser.
-func (mr *MockRepositoryMockRecorder) FetchUser(login, password any) *gomock.Call {
+// GetUserByCredentials indicates an expected call of GetUserByCredentials.
+func (mr *MockRepositoryMockRecorder) GetUserByCredentials(login, password any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchUser", reflect.TypeOf((*MockRepository)(nil).FetchUser), login, password)
-}
-
-// StoreUser mocks base method.
-func (m *MockRepository) StoreUser(login, password string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StoreUser", login, password)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// StoreUser indicates an expected call of StoreUser.
-func (mr *MockRepositoryMockRecorder) StoreUser(login, password any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreUser", reflect.TypeOf((*MockRepository)(nil).StoreUser), login, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByCredentials", reflect.TypeOf((*MockRepository)(nil).GetUserByCredentials), login, password)
 }

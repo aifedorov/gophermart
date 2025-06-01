@@ -46,4 +46,6 @@ func (s *Server) mountHandlers() {
 
 	s.router.Post("/api/user/register", handlers.NewRegisterHandler(s.repo))
 	s.router.Post("/api/user/login", handlers.NewLoginHandler(s.repo))
+	s.router.Post("/api/user/orders", handlers.NewCreateOrdersHandler(s.repo))
+	s.router.Get("/api/user/orders", handlers.NewGetOrdersHandler(s.repo))
 }
