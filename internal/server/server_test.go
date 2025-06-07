@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/repository/mocks"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 )
 
 type ServerTestSuite struct {
@@ -27,12 +29,19 @@ type ServerTestSuite struct {
 }
 
 func (suite *ServerTestSuite) SetupSuite() {
-	suite.client = &http.Client{}
+	jar, _ := cookiejar.New(nil)
+	suite.client = &http.Client{
+		Jar: jar,
+	}
 }
 
 func (suite *ServerTestSuite) SetupTest() {
 	suite.ctrl = gomock.NewController(suite.T())
 	suite.mockRepo = mocks.NewMockRepository(suite.ctrl)
+
+	// Clear cookies between tests
+	jar, _ := cookiejar.New(nil)
+	suite.client.Jar = jar
 
 	s := NewServer(newMockConfig(), suite.mockRepo)
 	s.mountHandlers()
@@ -55,7 +64,7 @@ func (suite *ServerTestSuite) TestUserRegistrationThenLogin() {
 
 	suite.mockRepo.EXPECT().
 		CreateUser(login, pass).
-		Return(nil)
+		Return(repository.User{ID: "1", Login: login}, nil)
 
 	suite.mockRepo.EXPECT().
 		GetUserByCredentials(login, pass).
@@ -73,15 +82,26 @@ func (suite *ServerTestSuite) TestUserRegistrationThenLogin() {
 }
 
 func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
+	login := "testuser"
+	pass := "testpass"
 	orderNumber := "4532015112830366"
 
+	// Setup mocks for registration, login, and orders
 	suite.mockRepo.EXPECT().
-		CreateOrder(orderNumber).
+		CreateUser(login, pass).
+		Return(repository.User{ID: "1", Login: login}, nil)
+
+	suite.mockRepo.EXPECT().
+		GetUserByCredentials(login, pass).
+		Return(repository.User{ID: "1", Login: login}, nil)
+
+	suite.mockRepo.EXPECT().
+		CreateOrderByUserID("1", orderNumber).
 		Return(nil).
 		AnyTimes()
 
 	suite.mockRepo.EXPECT().
-		GetOrders().
+		GetOrdersByUserID("1").
 		Return([]repository.Order{
 			{
 				ID:        "1",
@@ -92,18 +112,116 @@ func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
 		}, nil).
 		AnyTimes()
 
-	// 1. Create order
-	resp := suite.createOrder(orderNumber)
+	// 1. Register and login to get auth
+	resp := suite.registerUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	resp = suite.loginUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	// 2. Create an order (authenticated)
+	resp = suite.createOrder(orderNumber)
 	suite.Equal(http.StatusAccepted, resp.StatusCode)
 	_ = resp.Body.Close()
 
-	// 2. Get orders
+	// 3. Get orders (authenticated)
 	resp = suite.getOrders()
 	suite.Equal(http.StatusOK, resp.StatusCode)
 
-	// 3. Check returned orders
+	// 4. Check returned orders
 	var orders []api.OrderResponse
 	err := json.NewDecoder(resp.Body).Decode(&orders)
+	suite.Require().NoError(err)
+	suite.Equal(1, len(orders))
+	suite.Equal(orderNumber, orders[0].Number)
+	_ = resp.Body.Close()
+}
+
+func (suite *ServerTestSuite) TestProtectedEndpointWithoutAuth() {
+	// Test get orders without authentication
+	resp := suite.getOrders()
+	suite.Equal(http.StatusUnauthorized, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	// Test creating order without authentication
+	resp = suite.createOrder("4532015112830366")
+	suite.Equal(http.StatusUnauthorized, resp.StatusCode)
+	_ = resp.Body.Close()
+}
+
+func (suite *ServerTestSuite) TestProtectedEndpointWithAuth() {
+	login := "testuser"
+	pass := "testpass"
+	orderNumber := "4532015112830366"
+
+	// Setup mocks
+	suite.mockRepo.EXPECT().
+		CreateUser(login, pass).
+		Return(repository.User{ID: "1", Login: login}, nil)
+
+	suite.mockRepo.EXPECT().
+		GetUserByCredentials(login, pass).
+		Return(repository.User{ID: "1", Login: login}, nil)
+
+	suite.mockRepo.EXPECT().
+		CreateOrderByUserID("1", orderNumber).
+		Return(nil)
+
+	suite.mockRepo.EXPECT().
+		GetOrdersByUserID("1").
+		Return([]repository.Order{
+			{
+				ID:        "1",
+				Number:    orderNumber,
+				Status:    repository.New,
+				CreatedAt: time.Time{},
+			},
+		}, nil)
+
+	// 1. Register and login to get auth cookie
+	resp := suite.registerUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	resp = suite.loginUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+
+	var authCookie *http.Cookie
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == auth.CookieName {
+			authCookie = cookie
+			break
+		}
+	}
+	suite.Require().NotNil(authCookie, "JWT cookie should be set after login")
+	_ = resp.Body.Close()
+
+	// 2. Test accessing protected endpoints with auth cookie
+	// Creat authenticated request for creating order
+	req, err := http.NewRequest("POST", suite.server.URL+"/api/user/orders", strings.NewReader(orderNumber))
+	suite.Require().NoError(err)
+	req.Header.Set("Content-Type", "text/plain")
+	req.AddCookie(authCookie)
+
+	resp, err = suite.client.Do(req)
+	suite.Require().NoError(err)
+	suite.Equal(http.StatusAccepted, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	// Create an authenticated request for getting orders
+	req, err = http.NewRequest("GET", suite.server.URL+"/api/user/orders", nil)
+	suite.Require().NoError(err)
+	req.AddCookie(authCookie)
+
+	resp, err = suite.client.Do(req)
+	suite.Require().NoError(err)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+
+	// Verify response contains the created order
+	var orders []api.OrderResponse
+	err = json.NewDecoder(resp.Body).Decode(&orders)
 	suite.Require().NoError(err)
 	suite.Equal(1, len(orders))
 	suite.Equal(orderNumber, orders[0].Number)
@@ -153,11 +271,12 @@ func (suite *ServerTestSuite) getOrders() *http.Response {
 	return resp
 }
 
-func newMockConfig() *config.Config {
-	return &config.Config{
+func newMockConfig() config.Config {
+	return config.Config{
 		ListenAddress:        "localhost:8080",
 		StorageDSN:           "postgres://test",
 		AccrualSystemAddress: "localhost:8081",
 		LogLevel:             "debug",
+		SecretKey:            "secret",
 	}
 }

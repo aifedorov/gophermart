@@ -21,7 +21,7 @@ func TestLoginHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := newMockStorageForLogin(ctrl)
-	handlerFunc := NewLoginHandler(repo)
+	handlerFunc := NewLoginHandler(newMockConfig(), repo)
 
 	type want struct {
 		contentType string

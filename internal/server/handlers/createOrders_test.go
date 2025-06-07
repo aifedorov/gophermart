@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -32,6 +34,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 		method string
 		path   string
 		body   string
+		userID string
 		want   want
 	}{
 		{
@@ -39,6 +42,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   `4532015112830366`,
+			userID: "1",
 			want: want{
 				statusCode:  http.StatusAccepted,
 				contentType: "text/plain",
@@ -49,6 +53,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   `1234567890`,
+			userID: "1",
 			want: want{
 				statusCode: http.StatusUnprocessableEntity,
 			},
@@ -58,8 +63,18 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   `5555555555554444`,
+			userID: "1",
 			want: want{
 				statusCode: http.StatusOK,
+			},
+		},
+		{
+			name:   "unauthorized",
+			method: http.MethodPost,
+			path:   "/api/user/orders",
+			body:   `4532015112830366`,
+			want: want{
+				statusCode: http.StatusUnauthorized,
 			},
 		},
 		{
@@ -67,6 +82,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   "",
+			userID: "1",
 			want: want{
 				statusCode: http.StatusBadRequest,
 			},
@@ -80,6 +96,11 @@ func TestCreateOrdersHandler(t *testing.T) {
 
 			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
 			res := httptest.NewRecorder()
+			if tt.userID != "" {
+				ctx := context.WithValue(req.Context(), auth.UserIDKey, tt.userID)
+				req = req.WithContext(ctx)
+			}
+
 			handlerFunc(res, req)
 
 			assert.Equal(t, tt.want.statusCode, res.Code)
@@ -95,12 +116,12 @@ func newMockStorageForCreateOrders(ctrl *gomock.Controller) repository.Repositor
 	mockRepo := mocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
-		CreateOrder("4532015112830366").
+		CreateOrderByUserID("1", "4532015112830366").
 		Return(nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		CreateOrder("5555555555554444").
+		CreateOrderByUserID("1", "5555555555554444").
 		Return(repository.ErrAlreadyExists).
 		AnyTimes()
 

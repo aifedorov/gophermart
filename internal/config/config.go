@@ -14,9 +14,10 @@ type Config struct {
 	StorageDSN           string `env:"DATABASE_URI,required,notEmpty"`
 	AccrualSystemAddress string `env:"ACCRUAL_SYSTEM_ADDRESS" envDefault:":8081"`
 	LogLevel             string `env:"LOG_LEVEL" envDefault:"info"`
+	SecretKey            string `env:"SECRET_KEY,required,notEmpty"`
 }
 
-func LoadConfig() (*Config, error) {
+func LoadConfig() (Config, error) {
 	var listenAddress, storageDSN, accrualSystemAddress, logLevel string
 
 	flag.StringVar(&listenAddress, "a", "", "address and port to run server")
@@ -31,7 +32,7 @@ func LoadConfig() (*Config, error) {
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
 	if listenAddress != "" {
@@ -47,5 +48,5 @@ func LoadConfig() (*Config, error) {
 		cfg.LogLevel = logLevel
 	}
 
-	return &cfg, nil
+	return cfg, nil
 }

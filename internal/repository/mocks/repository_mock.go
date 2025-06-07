@@ -40,26 +40,27 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
-// CreateOrder mocks base method.
-func (m *MockRepository) CreateOrder(orderNumber string) error {
+// CreateOrderByUserID mocks base method.
+func (m *MockRepository) CreateOrderByUserID(userID, orderNumber string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrder", orderNumber)
+	ret := m.ctrl.Call(m, "CreateOrderByUserID", userID, orderNumber)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateOrder indicates an expected call of CreateOrder.
-func (mr *MockRepositoryMockRecorder) CreateOrder(orderNumber any) *gomock.Call {
+// CreateOrderByUserID indicates an expected call of CreateOrderByUserID.
+func (mr *MockRepositoryMockRecorder) CreateOrderByUserID(userID, orderNumber any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrder", reflect.TypeOf((*MockRepository)(nil).CreateOrder), orderNumber)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrderByUserID", reflect.TypeOf((*MockRepository)(nil).CreateOrderByUserID), userID, orderNumber)
 }
 
 // CreateUser mocks base method.
-func (m *MockRepository) CreateUser(login, password string) error {
+func (m *MockRepository) CreateUser(login, password string) (repository.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", login, password)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(repository.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateUser indicates an expected call of CreateUser.
@@ -68,19 +69,19 @@ func (mr *MockRepositoryMockRecorder) CreateUser(login, password any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockRepository)(nil).CreateUser), login, password)
 }
 
-// GetOrders mocks base method.
-func (m *MockRepository) GetOrders() ([]repository.Order, error) {
+// GetOrdersByUserID mocks base method.
+func (m *MockRepository) GetOrdersByUserID(userID string) ([]repository.Order, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrders")
+	ret := m.ctrl.Call(m, "GetOrdersByUserID", userID)
 	ret0, _ := ret[0].([]repository.Order)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOrders indicates an expected call of GetOrders.
-func (mr *MockRepositoryMockRecorder) GetOrders() *gomock.Call {
+// GetOrdersByUserID indicates an expected call of GetOrdersByUserID.
+func (mr *MockRepositoryMockRecorder) GetOrdersByUserID(userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrders", reflect.TypeOf((*MockRepository)(nil).GetOrders))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrdersByUserID", reflect.TypeOf((*MockRepository)(nil).GetOrdersByUserID), userID)
 }
 
 // GetUserByCredentials mocks base method.

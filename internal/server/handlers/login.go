@@ -6,11 +6,13 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/repository"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 )
 
-func NewLoginHandler(repo repository.Repository) http.HandlerFunc {
+func NewLoginHandler(cfg config.Config, repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -27,7 +29,7 @@ func NewLoginHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		_, err = repo.GetUserByCredentials(body.Login, body.Password)
+		user, err := repo.GetUserByCredentials(body.Login, body.Password)
 		if errors.Is(err, repository.ErrInvalidateCredentials) || errors.Is(err, repository.ErrNotFound) {
 			logger.Log.Info("invalid login or password")
 			http.Error(rw, "invalid login or password", http.StatusUnauthorized)
@@ -38,8 +40,7 @@ func NewLoginHandler(repo repository.Repository) http.HandlerFunc {
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 
-		// TODO: Set cookies
-
+		auth.SetNewAuthCookies(user.ID, cfg.SecretKey, rw)
 		rw.WriteHeader(http.StatusOK)
 	}
 }

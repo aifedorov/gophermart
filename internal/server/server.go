@@ -12,15 +12,16 @@ import (
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/server/handlers"
 	"github.com/aifedorov/gophermart/internal/server/middleware"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 )
 
 type Server struct {
 	router *chi.Mux
-	config *config.Config
+	config config.Config
 	repo   repository.Repository
 }
 
-func NewServer(cfg *config.Config, repo repository.Repository) *Server {
+func NewServer(cfg config.Config, repo repository.Repository) *Server {
 	return &Server{
 		router: chi.NewRouter(),
 		config: cfg,
@@ -40,12 +41,18 @@ func (s *Server) Run() {
 
 func (s *Server) mountHandlers() {
 
+	jwtMiddleware := auth.NewJWTMiddleware(s.config.SecretKey)
+
 	s.router.Use(chimiddleware.Compress(6, "application/json", "text/plain", "text/html"))
 	s.router.Use(middleware.RequestLogger)
 	s.router.Use(middleware.ResponseLogger)
 
-	s.router.Post("/api/user/register", handlers.NewRegisterHandler(s.repo))
-	s.router.Post("/api/user/login", handlers.NewLoginHandler(s.repo))
-	s.router.Post("/api/user/orders", handlers.NewCreateOrdersHandler(s.repo))
-	s.router.Get("/api/user/orders", handlers.NewGetOrdersHandler(s.repo))
+	s.router.Post("/api/user/register", handlers.NewRegisterHandler(s.config, s.repo))
+	s.router.Post("/api/user/login", handlers.NewLoginHandler(s.config, s.repo))
+
+	s.router.Group(func(r chi.Router) {
+		r.Use(jwtMiddleware.CheckJWT)
+		r.Post("/api/user/orders", handlers.NewCreateOrdersHandler(s.repo))
+		r.Get("/api/user/orders", handlers.NewGetOrdersHandler(s.repo))
+	})
 }

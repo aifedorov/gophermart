@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"io"
 	"net/http"
 
@@ -15,6 +16,13 @@ import (
 func NewCreateOrdersHandler(repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "text/plain")
+
+		userID, err := auth.GetUserID(req)
+		if err != nil {
+			logger.Log.Info("user not authenticated", zap.Error(err))
+			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
 
 		order, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -35,7 +43,7 @@ func NewCreateOrdersHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		err = repo.CreateOrder(string(order))
+		err = repo.CreateOrderByUserID(userID, string(order))
 		if errors.Is(err, repository.ErrAlreadyExists) {
 			logger.Log.Info("order already exists", zap.String("order", string(order)))
 			rw.WriteHeader(http.StatusOK)

@@ -20,20 +20,22 @@ func NewInMemoryStorage() *InMemoryStorage {
 	}
 }
 
-func (ms *InMemoryStorage) CreateUser(login, password string) error {
+func (ms *InMemoryStorage) CreateUser(login, password string) (User, error) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
-	_, ok := ms.users[login]
+	user, ok := ms.users[login]
 	if ok {
-		return ErrAlreadyExists
+		return User{}, ErrAlreadyExists
 	}
+
 	ms.users[login] = User{
 		ID:       uuid.NewString(),
 		Login:    login,
 		Password: password,
 	}
-	return nil
+
+	return user, nil
 }
 
 func (ms *InMemoryStorage) GetUserByCredentials(login, password string) (User, error) {
@@ -51,7 +53,7 @@ func (ms *InMemoryStorage) GetUserByCredentials(login, password string) (User, e
 	return user, nil
 }
 
-func (ms *InMemoryStorage) CreateOrder(orderNumber string) error {
+func (ms *InMemoryStorage) CreateOrderByUserID(userID, orderNumber string) error {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
@@ -69,7 +71,7 @@ func (ms *InMemoryStorage) CreateOrder(orderNumber string) error {
 	return nil
 }
 
-func (ms *InMemoryStorage) GetOrders() ([]Order, error) {
+func (ms *InMemoryStorage) GetOrdersByUserID(userID string) ([]Order, error) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
 

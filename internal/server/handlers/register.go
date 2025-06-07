@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"errors"
+	"github.com/aifedorov/gophermart/internal/config"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -10,7 +12,7 @@ import (
 	"github.com/aifedorov/gophermart/internal/repository"
 )
 
-func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
+func NewRegisterHandler(cfg config.Config, repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -27,7 +29,7 @@ func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		err = repo.CreateUser(body.Login, body.Password)
+		user, err := repo.CreateUser(body.Login, body.Password)
 		if errors.Is(err, repository.ErrAlreadyExists) {
 			logger.Log.Info("login already exists", zap.String("login", body.Login))
 			http.Error(rw, "login already exists", http.StatusConflict)
@@ -39,8 +41,7 @@ func NewRegisterHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		// TODO: Set cookies
-
+		auth.SetNewAuthCookies(user.ID, cfg.SecretKey, rw)
 		rw.WriteHeader(http.StatusOK)
 	}
 }

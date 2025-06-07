@@ -19,7 +19,7 @@ func TestServer_Register(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := newMockStorageForRegister(ctrl)
-	handlerFunc := NewRegisterHandler(repo)
+	handlerFunc := NewRegisterHandler(newMockConfig(), repo)
 
 	type want struct {
 		contentType string
@@ -139,26 +139,27 @@ func newMockStorageForRegister(ctrl *gomock.Controller) repository.Repository {
 
 	mockRepo.EXPECT().
 		CreateUser("loginExists", gomock.Any()).
-		Return(repository.ErrAlreadyExists).
+		Return(repository.User{}, repository.ErrAlreadyExists).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		CreateUser("newLogin", "test").
-		Return(nil).
+		Return(repository.User{ID: "1", Login: "newLogin"}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		CreateUser("", gomock.Any()).
-		Return(repository.ErrNotFound).AnyTimes()
+		Return(repository.User{}, repository.ErrNotFound).
+		AnyTimes()
 
 	mockRepo.EXPECT().
 		CreateUser(gomock.Any(), "").
-		Return(repository.ErrNotFound).
+		Return(repository.User{}, repository.ErrNotFound).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		CreateUser("test", "test").
-		Return(errors.New("internal error")).
+		Return(repository.User{}, errors.New("internal error")).
 		AnyTimes()
 
 	return mockRepo

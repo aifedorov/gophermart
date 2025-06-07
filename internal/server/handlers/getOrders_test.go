@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -32,16 +34,26 @@ func TestGetOrdersHandler(t *testing.T) {
 		method string
 		path   string
 		body   string
+		userID string
 		want   want
 	}{
 		{
 			name:   "return order list",
 			method: http.MethodGet,
 			path:   "/api/user/orders",
+			userID: "1",
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
 				body:        `{"id":"1","number":"4532015112830366","status":"CREATED"}`,
+			},
+		},
+		{
+			name:   "unauthorized - no user id in context",
+			method: http.MethodGet,
+			path:   "/api/user/orders",
+			want: want{
+				statusCode: http.StatusUnauthorized,
 			},
 		},
 	}
@@ -53,10 +65,15 @@ func TestGetOrdersHandler(t *testing.T) {
 
 			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
 			res := httptest.NewRecorder()
+
+			if tt.userID != "" {
+				ctx := context.WithValue(req.Context(), auth.UserIDKey, tt.userID)
+				req = req.WithContext(ctx)
+			}
+
 			handlerFunc(res, req)
 
 			assert.Equal(t, tt.want.statusCode, res.Code)
-
 			if tt.want.contentType != "" {
 				assert.Equal(t, tt.want.contentType, res.Header().Get("Content-Type"))
 			}
@@ -68,14 +85,14 @@ func newMockStorageForGetOrders(ctrl *gomock.Controller) repository.Repository {
 	mockRepo := mocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
-		GetOrders().
+		GetOrdersByUserID("1").
 		Return([]repository.Order{
-			{ID: "1", Number: "4532015112830366", Status: repository.New},
+			{ID: "1", UserID: "1", Number: "4532015112830366", Status: repository.New},
 		}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		GetOrders().
+		GetOrdersByUserID("2").
 		Return(nil, repository.ErrNotFound).
 		AnyTimes()
 
