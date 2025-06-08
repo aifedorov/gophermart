@@ -13,11 +13,9 @@ import (
 	"github.com/aifedorov/gophermart/internal/logger"
 )
 
-type ContextKey string
-
 const (
-	UserIDKey  ContextKey = "user_id"
-	CookieName            = "JWT"
+	UserIDKey  string = "user_id"
+	CookieName string = "JWT"
 )
 
 const (
