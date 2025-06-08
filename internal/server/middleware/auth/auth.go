@@ -13,10 +13,11 @@ import (
 	"github.com/aifedorov/gophermart/internal/logger"
 )
 
-const (
-	UserIDKey  string = "user_id"
-	CookieName string = "JWT"
-)
+type ContextKey string
+
+const UserIDKey ContextKey = "user_id"
+
+const CookieName string = "JWT"
 
 const (
 	tokenExp   = time.Hour * 1

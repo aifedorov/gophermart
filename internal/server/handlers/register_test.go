@@ -24,7 +24,6 @@ func TestServer_Register(t *testing.T) {
 	type want struct {
 		contentType string
 		statusCode  int
-		body        string
 	}
 	tests := []struct {
 		name   string
