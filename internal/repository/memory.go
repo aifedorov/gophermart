@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type InMemoryStorage struct {
@@ -24,18 +25,24 @@ func (ms *InMemoryStorage) CreateUser(login, password string) (User, error) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
-	user, ok := ms.users[login]
+	_, ok := ms.users[login]
 	if ok {
 		return User{}, ErrAlreadyExists
 	}
 
-	ms.users[login] = User{
-		ID:       uuid.NewString(),
-		Login:    login,
-		Password: password,
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return User{}, err
 	}
 
-	return user, nil
+	newUser := User{
+		ID:       uuid.NewString(),
+		Login:    login,
+		Password: string(hashedPassword),
+	}
+
+	ms.users[login] = newUser
+	return newUser, nil
 }
 
 func (ms *InMemoryStorage) GetUserByCredentials(login, password string) (User, error) {
@@ -46,8 +53,9 @@ func (ms *InMemoryStorage) GetUserByCredentials(login, password string) (User, e
 	if !ok {
 		return User{}, ErrNotFound
 	}
-	// TODO: Use hash function instead of comparing passwords directly.
-	if user.Password != password {
+
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
 		return User{}, ErrInvalidateCredentials
 	}
 	return user, nil

@@ -9,6 +9,7 @@ var (
 	ErrOrderNotFound         = errors.New("order not found")
 )
 
+// TODO: Split into domains.
 type Repository interface {
 	CreateUser(login, password string) (User, error)
 	GetUserByCredentials(login, password string) (User, error)
