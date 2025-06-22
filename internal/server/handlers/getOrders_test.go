@@ -44,7 +44,7 @@ func TestGetOrdersHandler(t *testing.T) {
 			userID: "1",
 			want: want{
 				statusCode:  http.StatusOK,
-				contentType: "app/json",
+				contentType: "application/json",
 				body:        `{"id":"1","number":"4532015112830366","status":"CREATED"}`,
 			},
 		},

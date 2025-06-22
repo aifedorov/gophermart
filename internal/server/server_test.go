@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/aifedorov/gophermart/internal/app/config"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -15,6 +14,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/aifedorov/gophermart/internal/api"
+	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"

@@ -12,7 +12,7 @@ import (
 
 func NewGetOrdersHandler(repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("Content-Type", "app/json")
+		rw.Header().Set("Content-Type", "application/json")
 
 		userID, err := auth.GetUserID(req)
 		if err != nil {

@@ -45,7 +45,7 @@ func TestLoginHandler(t *testing.T) {
 			}`,
 			want: want{
 				statusCode:  http.StatusOK,
-				contentType: "app/json",
+				contentType: "application/json",
 				body:        `{"id":"1","login":"loginExists","password":"pass"}`,
 			},
 		},

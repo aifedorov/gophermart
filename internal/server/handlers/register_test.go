@@ -42,7 +42,7 @@ func TestServer_Register(t *testing.T) {
 			}`,
 			want: want{
 				statusCode:  http.StatusOK,
-				contentType: "app/json",
+				contentType: "application/json",
 			},
 		},
 		{
