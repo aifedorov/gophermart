@@ -2,15 +2,14 @@ package handlers
 
 import (
 	"github.com/aifedorov/gophermart/internal/api"
+	"github.com/aifedorov/gophermart/internal/domain/order"
 	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"go.uber.org/zap"
 	"net/http"
-
-	"github.com/aifedorov/gophermart/internal/repository"
 )
 
-func NewGetOrdersHandler(repo repository.Repository) http.HandlerFunc {
+func NewGetOrdersHandler(orderService *order.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -21,15 +20,20 @@ func NewGetOrdersHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		orders, err := repo.GetOrdersByUserID(userID)
+		orders, err := orderService.GetUserOrders(userID)
 		if err != nil {
 			logger.Log.Error("failed to get orders", zap.Error(err))
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
+		if len(orders) == 0 {
+			rw.WriteHeader(http.StatusNoContent)
+			return
+		}
+
 		rw.WriteHeader(http.StatusOK)
-		if err := encodeResponse(rw, api.ToOrdersResponse(orders)); err != nil {
+		if err := encodeResponse(rw, api.ToDomainOrdersResponse(orders)); err != nil {
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

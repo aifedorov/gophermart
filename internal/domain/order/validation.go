@@ -1,11 +1,11 @@
-package validation
+package order
 
 import (
 	"strconv"
 	"strings"
 )
 
-func IsValidOrderNumber(number string) bool {
+func isValidOrderNumber(number string) bool {
 	number = strings.ReplaceAll(number, " ", "")
 	if number == "" {
 		return false

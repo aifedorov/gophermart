@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/aifedorov/gophermart/internal/domain/user"
 	"github.com/aifedorov/gophermart/internal/repository"
-	"github.com/aifedorov/gophermart/internal/repository/mocks"
+	mock_repository "github.com/aifedorov/gophermart/internal/repository/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"net/http"
@@ -20,7 +20,7 @@ func TestServer_Register(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := newMockStorageForRegister(ctrl)
-	userService := user.New(repo)
+	userService := user.NewService(repo)
 	handlerFunc := NewRegisterHandler(newMockConfig(), userService)
 
 	type want struct {
@@ -136,7 +136,7 @@ func TestServer_Register(t *testing.T) {
 }
 
 func newMockStorageForRegister(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mocks.NewMockRepository(ctrl)
+	mockRepo := mock_repository.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
 		CreateUser("loginExists", gomock.Any()).

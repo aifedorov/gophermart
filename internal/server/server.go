@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/aifedorov/gophermart/internal/config"
+	"github.com/aifedorov/gophermart/internal/domain/order"
 	"github.com/aifedorov/gophermart/internal/domain/user"
 	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/repository"
@@ -17,19 +18,22 @@ import (
 )
 
 type Server struct {
-	router      *chi.Mux
-	config      config.Config
-	repo        repository.Repository
-	userService *user.Service
+	router       *chi.Mux
+	config       config.Config
+	repo         repository.Repository
+	userService  *user.Service
+	orderService *order.Service
 }
 
 func NewServer(cfg config.Config, repo repository.Repository) *Server {
-	userService := user.New(repo)
+	userService := user.NewService(repo)
+	orderService := order.NewService(repo)
 	return &Server{
-		router:      chi.NewRouter(),
-		config:      cfg,
-		repo:        repo,
-		userService: userService,
+		router:       chi.NewRouter(),
+		config:       cfg,
+		repo:         repo,
+		userService:  userService,
+		orderService: orderService,
 	}
 }
 
@@ -56,7 +60,7 @@ func (s *Server) mountHandlers() {
 
 	s.router.Group(func(r chi.Router) {
 		r.Use(jwtMiddleware.CheckJWT)
-		r.Post("/api/user/orders", handlers.NewCreateOrdersHandler(s.repo))
-		r.Get("/api/user/orders", handlers.NewGetOrdersHandler(s.repo))
+		r.Post("/api/user/orders", handlers.NewCreateOrdersHandler(s.orderService))
+		r.Get("/api/user/orders", handlers.NewGetOrdersHandler(s.orderService))
 	})
 }

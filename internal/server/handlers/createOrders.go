@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"github.com/aifedorov/gophermart/internal/domain/order"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"io"
 	"net/http"
@@ -9,11 +10,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/aifedorov/gophermart/internal/logger"
-	"github.com/aifedorov/gophermart/internal/repository"
-	"github.com/aifedorov/gophermart/pkg/validation"
 )
 
-func NewCreateOrdersHandler(repo repository.Repository) http.HandlerFunc {
+func NewCreateOrdersHandler(orderService *order.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "text/plain")
 
@@ -24,33 +23,37 @@ func NewCreateOrdersHandler(repo repository.Repository) http.HandlerFunc {
 			return
 		}
 
-		order, err := io.ReadAll(req.Body)
+		orderNumber, err := io.ReadAll(req.Body)
 		if err != nil {
 			logger.Log.Info("failed to read request body", zap.Error(err))
 			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
 
-		if len(order) == 0 {
+		if len(orderNumber) == 0 {
 			logger.Log.Info("empty order number")
 			http.Error(rw, "empty order number", http.StatusBadRequest)
 			return
 		}
 
-		if !validation.IsValidOrderNumber(string(order)) {
-			logger.Log.Info("invalid order number")
+		_, err = orderService.CreateOrder(userID, string(orderNumber))
+		if errors.Is(err, order.ErrInvalidOrderNumber) {
+			logger.Log.Info("invalid order number", zap.String("order", string(orderNumber)))
 			http.Error(rw, "invalid order number", http.StatusUnprocessableEntity)
 			return
 		}
-
-		err = repo.CreateOrderByUserID(userID, string(order))
-		if errors.Is(err, repository.ErrAlreadyExists) {
-			logger.Log.Info("order already exists", zap.String("order", string(order)))
+		if errors.Is(err, order.ErrOrderAlreadyUploaded) {
+			logger.Log.Info("order already uploaded by this user", zap.String("order", string(orderNumber)))
 			rw.WriteHeader(http.StatusOK)
 			return
 		}
+		if errors.Is(err, order.ErrOrderUploadedByAnotherUser) {
+			logger.Log.Info("order uploaded by another user", zap.String("order", string(orderNumber)))
+			http.Error(rw, "order uploaded by another user", http.StatusConflict)
+			return
+		}
 		if err != nil {
-			logger.Log.Error("failed to store order", zap.Error(err))
+			logger.Log.Error("failed to create order", zap.Error(err))
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

@@ -16,7 +16,7 @@ import (
 	"github.com/aifedorov/gophermart/internal/api"
 	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/repository"
-	"github.com/aifedorov/gophermart/internal/repository/mocks"
+	mock_repository "github.com/aifedorov/gophermart/internal/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 )
 
@@ -25,7 +25,7 @@ type ServerTestSuite struct {
 	server   *httptest.Server
 	client   *http.Client
 	ctrl     *gomock.Controller
-	mockRepo *mocks.MockRepository
+	mockRepo *mock_repository.MockRepository
 }
 
 func (suite *ServerTestSuite) SetupSuite() {
@@ -37,7 +37,7 @@ func (suite *ServerTestSuite) SetupSuite() {
 
 func (suite *ServerTestSuite) SetupTest() {
 	suite.ctrl = gomock.NewController(suite.T())
-	suite.mockRepo = mocks.NewMockRepository(suite.ctrl)
+	suite.mockRepo = mock_repository.NewMockRepository(suite.ctrl)
 
 	// Clear cookies between tests
 	jar, _ := cookiejar.New(nil)
@@ -96,8 +96,19 @@ func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
 		Return(repository.User{ID: "1", Login: login}, nil)
 
 	suite.mockRepo.EXPECT().
-		CreateOrderByUserID("1", orderNumber).
-		Return(nil).
+		GetOrderByNumber(orderNumber).
+		Return(repository.Order{}, repository.ErrOrderNotFound).
+		AnyTimes()
+
+	suite.mockRepo.EXPECT().
+		CreateOrder("1", orderNumber).
+		Return(repository.Order{
+			ID:        "1",
+			UserID:    "1",
+			Number:    orderNumber,
+			Status:    repository.New,
+			CreatedAt: time.Time{},
+		}, nil).
 		AnyTimes()
 
 	suite.mockRepo.EXPECT().
@@ -105,6 +116,7 @@ func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
 		Return([]repository.Order{
 			{
 				ID:        "1",
+				UserID:    "1",
 				Number:    orderNumber,
 				Status:    repository.New,
 				CreatedAt: time.Time{},
@@ -166,14 +178,25 @@ func (suite *ServerTestSuite) TestProtectedEndpointWithAuth() {
 		Return(repository.User{ID: "1", Login: login}, nil)
 
 	suite.mockRepo.EXPECT().
-		CreateOrderByUserID("1", orderNumber).
-		Return(nil)
+		GetOrderByNumber(orderNumber).
+		Return(repository.Order{}, repository.ErrOrderNotFound)
+
+	suite.mockRepo.EXPECT().
+		CreateOrder("1", orderNumber).
+		Return(repository.Order{
+			ID:        "1",
+			UserID:    "1",
+			Number:    orderNumber,
+			Status:    repository.New,
+			CreatedAt: time.Time{},
+		}, nil)
 
 	suite.mockRepo.EXPECT().
 		GetOrdersByUserID("1").
 		Return([]repository.Order{
 			{
 				ID:        "1",
+				UserID:    "1",
 				Number:    orderNumber,
 				Status:    repository.New,
 				CreatedAt: time.Time{},

@@ -64,6 +64,7 @@ func (ms *InMemoryStorage) CreateOrderByUserID(userID, orderNumber string) error
 
 	ms.orders[orderNumber] = Order{
 		ID:        uuid.NewString(),
+		UserID:    userID,
 		Number:    orderNumber,
 		Status:    New,
 		CreatedAt: time.Now(),
@@ -77,7 +78,48 @@ func (ms *InMemoryStorage) GetOrdersByUserID(userID string) ([]Order, error) {
 
 	res := make([]Order, 0)
 	for _, order := range ms.orders {
-		res = append(res, order)
+		if order.UserID == userID {
+			res = append(res, order)
+		}
 	}
 	return res, nil
+}
+
+func (ms *InMemoryStorage) CreateOrder(userID, number string) (Order, error) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
+	order := Order{
+		ID:        uuid.NewString(),
+		UserID:    userID,
+		Number:    number,
+		Status:    New,
+		CreatedAt: time.Now(),
+	}
+
+	ms.orders[number] = order
+	return order, nil
+}
+
+func (ms *InMemoryStorage) GetOrderByNumber(number string) (Order, error) {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
+
+	order, ok := ms.orders[number]
+	if !ok {
+		return Order{}, ErrOrderNotFound
+	}
+	return order, nil
+}
+
+func (ms *InMemoryStorage) UpdateOrder(order Order) error {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
+	if _, ok := ms.orders[order.Number]; !ok {
+		return ErrOrderNotFound
+	}
+
+	ms.orders[order.Number] = order
+	return nil
 }

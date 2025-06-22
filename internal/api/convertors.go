@@ -1,24 +1,26 @@
 package api
 
-import "github.com/aifedorov/gophermart/internal/repository"
+import (
+	"github.com/aifedorov/gophermart/internal/domain/order"
+)
 
-func ToOrdersResponse(orders []repository.Order) []OrderResponse {
+func ToDomainOrdersResponse(orders []*order.Order) []OrderResponse {
 	if len(orders) == 0 {
 		return nil
 	}
 
 	respOrders := make([]OrderResponse, len(orders))
-	for i, order := range orders {
+	for i, o := range orders {
 		var accrual *float64
-		if order.Amount > 0 {
-			accrual = &order.Amount
+		if o.Status == order.StatusProcessed && o.Amount > 0 {
+			accrual = &o.Amount
 		}
 
 		respOrder := OrderResponse{
-			Number:     order.Number,
-			Status:     string(order.Status),
+			Number:     o.Number,
+			Status:     string(o.Status),
 			Accrual:    accrual,
-			UploadedAt: order.CreatedAt,
+			UploadedAt: o.CreatedAt,
 		}
 
 		respOrders[i] = respOrder

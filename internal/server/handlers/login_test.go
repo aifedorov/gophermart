@@ -11,7 +11,7 @@ import (
 
 	"github.com/aifedorov/gophermart/internal/domain/user"
 	"github.com/aifedorov/gophermart/internal/repository"
-	"github.com/aifedorov/gophermart/internal/repository/mocks"
+	mock_repository "github.com/aifedorov/gophermart/internal/repository/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +22,7 @@ func TestLoginHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := newMockStorageForLogin(ctrl)
-	userService := user.New(repo)
+	userService := user.NewService(repo)
 	handlerFunc := NewLoginHandler(newMockConfig(), userService)
 
 	type want struct {
@@ -132,7 +132,7 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func newMockStorageForLogin(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mocks.NewMockRepository(ctrl)
+	mockRepo := mock_repository.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
 		GetUserByCredentials("loginExists", "test").

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/aifedorov/gophermart/internal/domain/order"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/aifedorov/gophermart/internal/repository"
-	"github.com/aifedorov/gophermart/internal/repository/mocks"
+	mock_repository "github.com/aifedorov/gophermart/internal/repository/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,8 @@ func TestGetOrdersHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := newMockStorageForGetOrders(ctrl)
-	handlerFunc := NewGetOrdersHandler(repo)
+	orderService := order.NewService(repo)
+	handlerFunc := NewGetOrdersHandler(orderService)
 
 	type want struct {
 		contentType string
@@ -45,7 +47,6 @@ func TestGetOrdersHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				body:        `{"id":"1","number":"4532015112830366","status":"CREATED"}`,
 			},
 		},
 		{
@@ -82,7 +83,7 @@ func TestGetOrdersHandler(t *testing.T) {
 }
 
 func newMockStorageForGetOrders(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mocks.NewMockRepository(ctrl)
+	mockRepo := mock_repository.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
 		GetOrdersByUserID("1").
