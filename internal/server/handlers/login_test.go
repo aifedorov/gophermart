@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/mock/gomock"
 
+	"github.com/aifedorov/gophermart/internal/domain/user"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/repository/mocks"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,8 @@ func TestLoginHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := newMockStorageForLogin(ctrl)
-	handlerFunc := NewLoginHandler(newMockConfig(), repo)
+	userService := user.New(repo)
+	handlerFunc := NewLoginHandler(newMockConfig(), userService)
 
 	type want struct {
 		contentType string

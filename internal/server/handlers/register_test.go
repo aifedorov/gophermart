@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"github.com/aifedorov/gophermart/internal/domain/user"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/repository/mocks"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,8 @@ func TestServer_Register(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := newMockStorageForRegister(ctrl)
-	handlerFunc := NewRegisterHandler(newMockConfig(), repo)
+	userService := user.New(repo)
+	handlerFunc := NewRegisterHandler(newMockConfig(), userService)
 
 	type want struct {
 		contentType string

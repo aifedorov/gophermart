@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/aifedorov/gophermart/internal/config"
+	"github.com/aifedorov/gophermart/internal/domain/user"
 	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/server/handlers"
@@ -16,16 +17,19 @@ import (
 )
 
 type Server struct {
-	router *chi.Mux
-	config config.Config
-	repo   repository.Repository
+	router      *chi.Mux
+	config      config.Config
+	repo        repository.Repository
+	userService *user.Service
 }
 
 func NewServer(cfg config.Config, repo repository.Repository) *Server {
+	userService := user.New(repo)
 	return &Server{
-		router: chi.NewRouter(),
-		config: cfg,
-		repo:   repo,
+		router:      chi.NewRouter(),
+		config:      cfg,
+		repo:        repo,
+		userService: userService,
 	}
 }
 
@@ -47,8 +51,8 @@ func (s *Server) mountHandlers() {
 	s.router.Use(middleware.RequestLogger)
 	s.router.Use(middleware.ResponseLogger)
 
-	s.router.Post("/api/user/register", handlers.NewRegisterHandler(s.config, s.repo))
-	s.router.Post("/api/user/login", handlers.NewLoginHandler(s.config, s.repo))
+	s.router.Post("/api/user/register", handlers.NewRegisterHandler(s.config, s.userService))
+	s.router.Post("/api/user/login", handlers.NewLoginHandler(s.config, s.userService))
 
 	s.router.Group(func(r chi.Router) {
 		r.Use(jwtMiddleware.CheckJWT)
