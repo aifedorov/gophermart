@@ -58,7 +58,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			},
 		},
 		{
-			name:   "order already exists",
+			name:   "order exists",
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   `5555555555554444`,

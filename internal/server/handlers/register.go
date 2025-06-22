@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"errors"
-	"github.com/aifedorov/gophermart/internal/config"
+	"github.com/aifedorov/gophermart/internal/app/config"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"net/http"
 
@@ -14,7 +14,7 @@ import (
 
 func NewRegisterHandler(cfg config.Config, repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "app/json")
 
 		body, err := decodeRegister(req)
 		if err != nil {

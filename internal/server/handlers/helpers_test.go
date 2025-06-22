@@ -1,6 +1,8 @@
 package handlers
 
-import "github.com/aifedorov/gophermart/internal/config"
+import (
+	"github.com/aifedorov/gophermart/internal/app/config"
+)
 
 func newMockConfig() config.Config {
 	return config.Config{

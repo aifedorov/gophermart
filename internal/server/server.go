@@ -1,13 +1,13 @@
 package server
 
 import (
+	"github.com/aifedorov/gophermart/internal/app/config"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 
-	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/server/handlers"
@@ -43,7 +43,7 @@ func (s *Server) mountHandlers() {
 
 	jwtMiddleware := auth.NewJWTMiddleware(s.config.SecretKey)
 
-	s.router.Use(chimiddleware.Compress(6, "application/json", "text/plain", "text/html"))
+	s.router.Use(chimiddleware.Compress(6, "app/json", "text/plain", "text/html"))
 	s.router.Use(middleware.RequestLogger)
 	s.router.Use(middleware.ResponseLogger)
 

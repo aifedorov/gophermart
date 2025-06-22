@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/aifedorov/gophermart/internal/app/config"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"log"
 
-	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/server"
 )

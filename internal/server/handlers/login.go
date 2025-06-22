@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"errors"
+	"github.com/aifedorov/gophermart/internal/app/config"
 	"net/http"
 
 	"go.uber.org/zap"
 
-	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
@@ -14,7 +14,7 @@ import (
 
 func NewLoginHandler(cfg config.Config, repo repository.Repository) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "app/json")
 
 		body, err := decodeLogin(req)
 		if err != nil {
