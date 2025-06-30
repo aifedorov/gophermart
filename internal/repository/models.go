@@ -15,6 +15,7 @@ type User struct {
 	ID       string
 	Login    string
 	Password string
+	Balance  float64
 }
 
 type Order struct {

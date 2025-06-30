@@ -6,6 +6,11 @@ type User struct {
 	Password string
 }
 
+type Balance struct {
+	Current   float64 `json:"current"`
+	Withdrawn float64 `json:"withdrawn"`
+}
+
 type RegisterRequest struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`

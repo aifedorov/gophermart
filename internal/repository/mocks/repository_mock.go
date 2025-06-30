@@ -55,20 +55,6 @@ func (mr *MockRepositoryMockRecorder) CreateOrder(userID, number any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrder", reflect.TypeOf((*MockRepository)(nil).CreateOrder), userID, number)
 }
 
-// CreateOrderByUserID mocks base method.
-func (m *MockRepository) CreateOrderByUserID(userID, orderNumber string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrderByUserID", userID, orderNumber)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateOrderByUserID indicates an expected call of CreateOrderByUserID.
-func (mr *MockRepositoryMockRecorder) CreateOrderByUserID(userID, orderNumber any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrderByUserID", reflect.TypeOf((*MockRepository)(nil).CreateOrderByUserID), userID, orderNumber)
-}
-
 // CreateUser mocks base method.
 func (m *MockRepository) CreateUser(login, password string) (repository.User, error) {
 	m.ctrl.T.Helper()
@@ -129,16 +115,17 @@ func (mr *MockRepositoryMockRecorder) GetUserByCredentials(login, password any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByCredentials", reflect.TypeOf((*MockRepository)(nil).GetUserByCredentials), login, password)
 }
 
-// UpdateOrder mocks base method.
-func (m *MockRepository) UpdateOrder(order repository.Order) error {
+// GetUserByID mocks base method.
+func (m *MockRepository) GetUserByID(userID string) (repository.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateOrder", order)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetUserByID", userID)
+	ret0, _ := ret[0].(repository.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// UpdateOrder indicates an expected call of UpdateOrder.
-func (mr *MockRepositoryMockRecorder) UpdateOrder(order any) *gomock.Call {
+// GetUserByID indicates an expected call of GetUserByID.
+func (mr *MockRepositoryMockRecorder) GetUserByID(userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrder", reflect.TypeOf((*MockRepository)(nil).UpdateOrder), order)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockRepository)(nil).GetUserByID), userID)
 }

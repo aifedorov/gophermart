@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+
 	"github.com/aifedorov/gophermart/internal/repository"
 )
 
@@ -57,4 +58,16 @@ func (s *Service) Login(req LoginRequest) (*User, error) {
 
 func (s *Service) isValidCredentials(login, password string) bool {
 	return login != "" && password != ""
+}
+
+func (s *Service) GetUserBalance(userID string) (*Balance, error) {
+	user, err := s.repo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Balance{
+		Current:   user.Balance,
+		Withdrawn: 0,
+	}, nil
 }

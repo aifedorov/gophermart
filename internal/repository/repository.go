@@ -13,6 +13,7 @@ var (
 type Repository interface {
 	CreateUser(login, password string) (User, error)
 	GetUserByCredentials(login, password string) (User, error)
+	GetUserByID(userID string) (User, error)
 	CreateOrder(userID, number string) (Order, error)
 	GetOrdersByUserID(userID string) ([]Order, error)
 	GetOrderByNumber(number string) (Order, error)

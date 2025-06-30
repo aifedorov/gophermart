@@ -61,6 +61,18 @@ func (ms *InMemoryStorage) GetUserByCredentials(login, password string) (User, e
 	return user, nil
 }
 
+func (ms *InMemoryStorage) GetUserByID(userID string) (User, error) {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
+
+	for _, user := range ms.users {
+		if user.ID == userID {
+			return user, nil
+		}
+	}
+	return User{}, ErrNotFound
+}
+
 func (ms *InMemoryStorage) CreateOrderByUserID(userID, orderNumber string) error {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()

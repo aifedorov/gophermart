@@ -37,14 +37,20 @@ func decodeLogin(r *http.Request) (api.LoginRequest, error) {
 	return body, nil
 }
 
-func isValidCredentials(login, password string) bool {
-	return login != "" && password != ""
-}
-
 func encodeResponse(rw http.ResponseWriter, orders []api.OrderResponse) error {
 	encoder := json.NewEncoder(rw)
 
 	if err := encoder.Encode(orders); err != nil {
+		logger.Log.Error("failed to encode response", zap.Error(err))
+		return errors.New("failed to encode response")
+	}
+	return nil
+}
+
+func encodeJSONResponse(rw http.ResponseWriter, data interface{}) error {
+	encoder := json.NewEncoder(rw)
+
+	if err := encoder.Encode(data); err != nil {
 		logger.Log.Error("failed to encode response", zap.Error(err))
 		return errors.New("failed to encode response")
 	}
