@@ -2,9 +2,10 @@ package api
 
 import (
 	"github.com/aifedorov/gophermart/internal/domain/order"
+	"github.com/aifedorov/gophermart/internal/domain/user"
 )
 
-func ToDomainOrdersResponse(orders []*order.Order) []OrderResponse {
+func ToOrdersResponse(orders []*order.Order) []OrderResponse {
 	if len(orders) == 0 {
 		return nil
 	}
@@ -26,4 +27,11 @@ func ToDomainOrdersResponse(orders []*order.Order) []OrderResponse {
 		respOrders[i] = respOrder
 	}
 	return respOrders
+}
+
+func ToBalanceResponse(balance user.Balance) BalanceResponse {
+	return BalanceResponse{
+		balance.Current,
+		balance.Withdrawn,
+	}
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/aifedorov/gophermart/internal/api"
 	"net/http"
 
 	"github.com/aifedorov/gophermart/internal/domain/user"
@@ -10,7 +11,7 @@ import (
 	"github.com/aifedorov/gophermart/internal/logger"
 )
 
-func NewGetBalanceHandler(userService *user.Service) http.HandlerFunc {
+func NewBalanceHandler(userService *user.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -29,7 +30,7 @@ func NewGetBalanceHandler(userService *user.Service) http.HandlerFunc {
 		}
 
 		rw.WriteHeader(http.StatusOK)
-		if err := encodeJSONResponse(rw, balance); err != nil {
+		if err := encodeJSONResponse(rw, api.ToBalanceResponse(balance)); err != nil {
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

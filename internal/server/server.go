@@ -20,12 +20,12 @@ import (
 type Server struct {
 	router       *chi.Mux
 	config       config.Config
-	repo         repository.Repository
+	repo         *repository.InMemoryStorage
 	userService  *user.Service
 	orderService *order.Service
 }
 
-func NewServer(cfg config.Config, repo repository.Repository) *Server {
+func NewServer(cfg config.Config, repo *repository.InMemoryStorage) *Server {
 	userService := user.NewService(repo)
 	orderService := order.NewService(repo)
 	return &Server{

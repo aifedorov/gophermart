@@ -35,7 +35,7 @@ func NewGetOrdersHandler(orderService *order.Service) http.HandlerFunc {
 		}
 
 		rw.WriteHeader(http.StatusOK)
-		if err := encodeResponse(rw, api.ToDomainOrdersResponse(orders)); err != nil {
+		if err := encodeResponse(rw, api.ToOrdersResponse(orders)); err != nil {
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

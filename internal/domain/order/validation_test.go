@@ -87,7 +87,7 @@ func TestIsValidOrderNumber(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result := isValidOrderNumber(tt.number)
+			result := IsValidOrderNumber(tt.number)
 			assert.Equal(t, tt.want.result, result)
 		})
 	}

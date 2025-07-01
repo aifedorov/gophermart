@@ -8,24 +8,20 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/mock/gomock"
 
 	"github.com/aifedorov/gophermart/internal/api"
 	"github.com/aifedorov/gophermart/internal/config"
 	"github.com/aifedorov/gophermart/internal/repository"
-	mock_repository "github.com/aifedorov/gophermart/internal/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 )
 
 type ServerTestSuite struct {
 	suite.Suite
-	server   *httptest.Server
-	client   *http.Client
-	ctrl     *gomock.Controller
-	mockRepo *mock_repository.MockRepository
+	server *httptest.Server
+	client *http.Client
+	repo   *repository.InMemoryStorage
 }
 
 func (suite *ServerTestSuite) SetupSuite() {
@@ -36,14 +32,13 @@ func (suite *ServerTestSuite) SetupSuite() {
 }
 
 func (suite *ServerTestSuite) SetupTest() {
-	suite.ctrl = gomock.NewController(suite.T())
-	suite.mockRepo = mock_repository.NewMockRepository(suite.ctrl)
+	suite.repo = repository.NewInMemoryStorage()
 
 	// Clear cookies between tests
 	jar, _ := cookiejar.New(nil)
 	suite.client.Jar = jar
 
-	s := NewServer(newMockConfig(), suite.mockRepo)
+	s := NewServer(newMockConfig(), suite.repo)
 	s.mountHandlers()
 
 	suite.server = httptest.NewServer(s.router)
@@ -51,7 +46,6 @@ func (suite *ServerTestSuite) SetupTest() {
 
 func (suite *ServerTestSuite) TearDownTest() {
 	suite.server.Close()
-	suite.ctrl.Finish()
 }
 
 func TestIntegrationSuite(t *testing.T) {
@@ -61,14 +55,6 @@ func TestIntegrationSuite(t *testing.T) {
 func (suite *ServerTestSuite) TestUserRegistrationThenLogin() {
 	login := "test"
 	pass := "pass"
-
-	suite.mockRepo.EXPECT().
-		CreateUser(login, pass).
-		Return(repository.User{ID: "1", Login: login}, nil)
-
-	suite.mockRepo.EXPECT().
-		GetUserByCredentials(login, pass).
-		Return(repository.User{ID: "1", Login: login}, nil)
 
 	// 1. Register user
 	resp := suite.registerUser(login, pass)
@@ -85,44 +71,6 @@ func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
 	login := "testuser"
 	pass := "testpass"
 	orderNumber := "4532015112830366"
-
-	// Setup mocks for registration, login, and orders
-	suite.mockRepo.EXPECT().
-		CreateUser(login, pass).
-		Return(repository.User{ID: "1", Login: login}, nil)
-
-	suite.mockRepo.EXPECT().
-		GetUserByCredentials(login, pass).
-		Return(repository.User{ID: "1", Login: login}, nil)
-
-	suite.mockRepo.EXPECT().
-		GetOrderByNumber(orderNumber).
-		Return(repository.Order{}, repository.ErrOrderNotFound).
-		AnyTimes()
-
-	suite.mockRepo.EXPECT().
-		CreateOrder("1", orderNumber).
-		Return(repository.Order{
-			ID:        "1",
-			UserID:    "1",
-			Number:    orderNumber,
-			Status:    repository.New,
-			CreatedAt: time.Time{},
-		}, nil).
-		AnyTimes()
-
-	suite.mockRepo.EXPECT().
-		GetOrdersByUserID("1").
-		Return([]repository.Order{
-			{
-				ID:        "1",
-				UserID:    "1",
-				Number:    orderNumber,
-				Status:    repository.New,
-				CreatedAt: time.Time{},
-			},
-		}, nil).
-		AnyTimes()
 
 	// 1. Register and login to get auth
 	resp := suite.registerUser(login, pass)
@@ -168,41 +116,6 @@ func (suite *ServerTestSuite) TestProtectedEndpointWithAuth() {
 	pass := "testpass"
 	orderNumber := "4532015112830366"
 
-	// Setup mocks
-	suite.mockRepo.EXPECT().
-		CreateUser(login, pass).
-		Return(repository.User{ID: "1", Login: login}, nil)
-
-	suite.mockRepo.EXPECT().
-		GetUserByCredentials(login, pass).
-		Return(repository.User{ID: "1", Login: login}, nil)
-
-	suite.mockRepo.EXPECT().
-		GetOrderByNumber(orderNumber).
-		Return(repository.Order{}, repository.ErrOrderNotFound)
-
-	suite.mockRepo.EXPECT().
-		CreateOrder("1", orderNumber).
-		Return(repository.Order{
-			ID:        "1",
-			UserID:    "1",
-			Number:    orderNumber,
-			Status:    repository.New,
-			CreatedAt: time.Time{},
-		}, nil)
-
-	suite.mockRepo.EXPECT().
-		GetOrdersByUserID("1").
-		Return([]repository.Order{
-			{
-				ID:        "1",
-				UserID:    "1",
-				Number:    orderNumber,
-				Status:    repository.New,
-				CreatedAt: time.Time{},
-			},
-		}, nil)
-
 	// 1. Register and login to get auth cookie
 	resp := suite.registerUser(login, pass)
 	suite.Equal(http.StatusOK, resp.StatusCode)
@@ -222,7 +135,7 @@ func (suite *ServerTestSuite) TestProtectedEndpointWithAuth() {
 	_ = resp.Body.Close()
 
 	// 2. Test accessing protected endpoints with auth cookie
-	// Creat authenticated request for creating order
+	// Create authenticated request for creating order
 	req, err := http.NewRequest("POST", suite.server.URL+"/api/user/orders", strings.NewReader(orderNumber))
 	suite.Require().NoError(err)
 	req.Header.Set("Content-Type", "text/plain")

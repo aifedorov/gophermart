@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"errors"
-	"github.com/aifedorov/gophermart/internal/domain/user"
-	"github.com/aifedorov/gophermart/internal/repository"
-	mock_repository "github.com/aifedorov/gophermart/internal/repository/mocks"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+
+	"github.com/aifedorov/gophermart/internal/domain/user"
+	userMocks "github.com/aifedorov/gophermart/internal/domain/user/mocks"
 )
 
 func TestServer_Register(t *testing.T) {
@@ -135,32 +136,32 @@ func TestServer_Register(t *testing.T) {
 	}
 }
 
-func newMockStorageForRegister(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mock_repository.NewMockRepository(ctrl)
+func newMockStorageForRegister(ctrl *gomock.Controller) user.Repository {
+	mockRepo := userMocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
 		CreateUser("loginExists", gomock.Any()).
-		Return(repository.User{}, repository.ErrAlreadyExists).
+		Return(user.User{}, user.ErrAlreadyExists).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		CreateUser("newLogin", "test").
-		Return(repository.User{ID: "1", Login: "newLogin"}, nil).
+		Return(user.User{ID: "1", Login: "newLogin"}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		CreateUser("", gomock.Any()).
-		Return(repository.User{}, repository.ErrNotFound).
+		Return(user.User{}, user.ErrNotFound).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		CreateUser(gomock.Any(), "").
-		Return(repository.User{}, repository.ErrNotFound).
+		Return(user.User{}, user.ErrNotFound).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		CreateUser("test", "test").
-		Return(repository.User{}, errors.New("internal error")).
+		Return(user.User{}, errors.New("internal error")).
 		AnyTimes()
 
 	return mockRepo

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func isValidOrderNumber(number string) bool {
+func IsValidOrderNumber(number string) bool {
 	number = strings.ReplaceAll(number, " ", "")
 	if number == "" {
 		return false

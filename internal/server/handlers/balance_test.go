@@ -7,25 +7,23 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aifedorov/gophermart/internal/domain/user"
-	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
-
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/aifedorov/gophermart/internal/repository"
-	mockRepository "github.com/aifedorov/gophermart/internal/repository/mocks"
-	"github.com/stretchr/testify/assert"
+	"github.com/aifedorov/gophermart/internal/domain/user"
+	userMocks "github.com/aifedorov/gophermart/internal/domain/user/mocks"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 )
 
-func TestGetBalanceHandler(t *testing.T) {
+func TestBalanceHandler(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	repo := newMockStorageForGetUserBalance(ctrl)
+	repo := newMockStorageBalanceHandler(ctrl)
 	userService := user.NewService(repo)
-	handlerFunc := NewGetBalanceHandler(userService)
+	handlerFunc := NewBalanceHandler(userService)
 
 	type want struct {
 		contentType string
@@ -107,27 +105,27 @@ func TestGetBalanceHandler(t *testing.T) {
 	}
 }
 
-func newMockStorageForGetUserBalance(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mockRepository.NewMockRepository(ctrl)
+func newMockStorageBalanceHandler(ctrl *gomock.Controller) user.Repository {
+	mockRepo := userMocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
 		GetUserByID("1").
-		Return(repository.User{ID: "1", Login: "test", Password: "test", Balance: 100}, nil).
+		Return(user.User{ID: "1", Login: "test", Password: "test", Balance: 100}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		GetUserByID("2").
-		Return(repository.User{ID: "2", Login: "zero", Password: "zero"}, nil).
+		Return(user.User{ID: "2", Login: "zero", Password: "zero"}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		GetUserByID("4").
-		Return(repository.User{}, repository.ErrNotFound).
+		Return(user.User{}, user.ErrNotFound).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		GetUserByID("5").
-		Return(repository.User{}, assert.AnError).
+		Return(user.User{}, assert.AnError).
 		AnyTimes()
 
 	return mockRepo

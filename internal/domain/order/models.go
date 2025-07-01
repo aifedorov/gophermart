@@ -1,6 +1,9 @@
 package order
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Status string
 
@@ -21,14 +24,21 @@ type Order struct {
 	ProcessedAt time.Time
 }
 
-type CreateOrderRequest struct {
-	Number string `json:"number"`
+type Withdrawal struct {
+	ID          string
+	UserID      string
+	OrderNumber string
+	Sum         float64
+	CreatedAt   time.Time
+	ProcessedAt *time.Time
 }
 
-type Response struct {
-	Number      string    `json:"number"`
-	Status      string    `json:"status"`
-	Amount      float64   `json:"accrual,omitempty"`
-	UploadedAt  time.Time `json:"uploaded_at"`
-	ProcessedAt time.Time `json:"processed_at,omitempty"`
+func NewWithdrawal(userID, orderNumber string, sum float64) *Withdrawal {
+	return &Withdrawal{
+		ID:          uuid.New().String(),
+		UserID:      userID,
+		OrderNumber: orderNumber,
+		Sum:         sum,
+		CreatedAt:   time.Now(),
+	}
 }

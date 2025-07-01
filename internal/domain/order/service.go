@@ -2,8 +2,6 @@ package order
 
 import (
 	"fmt"
-
-	"github.com/aifedorov/gophermart/internal/repository"
 )
 
 type Service struct {
@@ -17,7 +15,7 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) CreateOrder(userID, number string) (*Order, error) {
-	if !isValidOrderNumber(number) {
+	if !IsValidOrderNumber(number) {
 		return nil, ErrInvalidOrderNumber
 	}
 
@@ -29,54 +27,24 @@ func (s *Service) CreateOrder(userID, number string) (*Order, error) {
 		return nil, ErrOrderUploadedByAnotherUser
 	}
 
-	repoOrder, err := s.repo.CreateOrder(userID, number)
+	order, err := s.repo.CreateOrder(userID, number)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create order: %w", err)
 	}
 
-	return s.convertFromRepoOrder(repoOrder), nil
+	return &order, nil
 }
 
 func (s *Service) GetUserOrders(userID string) ([]*Order, error) {
-	repoOrders, err := s.repo.GetOrdersByUserID(userID)
+	orders, err := s.repo.GetOrdersByUserID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user orders: %w", err)
 	}
 
-	orders := make([]*Order, 0, len(repoOrders))
-	for _, repoOrder := range repoOrders {
-		orders = append(orders, s.convertFromRepoOrder(repoOrder))
+	result := make([]*Order, 0, len(orders))
+	for i := range orders {
+		result = append(result, &orders[i])
 	}
 
-	return orders, nil
-}
-
-func (s *Service) convertFromRepoOrder(repoOrder repository.Order) *Order {
-	return &Order{
-		ID:          repoOrder.ID,
-		UserID:      repoOrder.UserID,
-		Number:      repoOrder.Number,
-		Status:      Status(repoOrder.Status),
-		Amount:      repoOrder.Amount,
-		CreatedAt:   repoOrder.CreatedAt,
-		ProcessedAt: repoOrder.ProcessedAt,
-	}
-}
-
-func (s *Service) ToOrderResponse(order *Order) Response {
-	resp := Response{
-		Number:     order.Number,
-		Status:     string(order.Status),
-		UploadedAt: order.CreatedAt,
-	}
-
-	if order.Status == StatusProcessed && order.Amount > 0 {
-		resp.Amount = order.Amount
-	}
-
-	if !order.ProcessedAt.IsZero() {
-		resp.ProcessedAt = order.ProcessedAt
-	}
-
-	return resp
+	return result, nil
 }

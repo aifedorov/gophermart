@@ -7,12 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
 	"github.com/aifedorov/gophermart/internal/domain/user"
-	"github.com/aifedorov/gophermart/internal/repository"
-	mock_repository "github.com/aifedorov/gophermart/internal/repository/mocks"
-	"github.com/stretchr/testify/assert"
+	userMocks "github.com/aifedorov/gophermart/internal/domain/user/mocks"
 )
 
 func TestLoginHandler(t *testing.T) {
@@ -131,27 +130,27 @@ func TestLoginHandler(t *testing.T) {
 	}
 }
 
-func newMockStorageForLogin(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mock_repository.NewMockRepository(ctrl)
+func newMockStorageForLogin(ctrl *gomock.Controller) user.Repository {
+	mockRepo := userMocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
 		GetUserByCredentials("loginExists", "test").
-		Return(repository.User{ID: "1", Login: "loginExists", Password: "test"}, nil).
+		Return(user.User{ID: "1", Login: "loginExists", Password: "test"}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		GetUserByCredentials("loginNotExists", "test").
-		Return(repository.User{}, repository.ErrNotFound).
+		Return(user.User{}, user.ErrNotFound).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		GetUserByCredentials("test", "wrongPass").
-		Return(repository.User{}, repository.ErrInvalidateCredentials).
+		Return(user.User{}, user.ErrInvalidateCredentials).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		GetUserByCredentials("test", "test").
-		Return(repository.User{}, errors.New("internal error")).
+		Return(user.User{}, errors.New("internal error")).
 		AnyTimes()
 
 	return mockRepo

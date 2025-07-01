@@ -37,6 +37,18 @@ func decodeLogin(r *http.Request) (api.LoginRequest, error) {
 	return body, nil
 }
 
+func decodeWithdraw(r *http.Request) (api.WithdrawRequest, error) {
+	var body api.WithdrawRequest
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if errors.Is(err, io.EOF) {
+		return api.WithdrawRequest{}, errors.New("request body is empty")
+	}
+	if err != nil {
+		return api.WithdrawRequest{}, fmt.Errorf("failed to decode request: %w", err)
+	}
+	return body, nil
+}
+
 func encodeResponse(rw http.ResponseWriter, orders []api.OrderResponse) error {
 	encoder := json.NewEncoder(rw)
 

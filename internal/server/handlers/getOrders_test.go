@@ -2,18 +2,17 @@ package handlers
 
 import (
 	"context"
-	"github.com/aifedorov/gophermart/internal/domain/order"
-	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/aifedorov/gophermart/internal/repository"
-	mock_repository "github.com/aifedorov/gophermart/internal/repository/mocks"
-	"github.com/stretchr/testify/assert"
+	"github.com/aifedorov/gophermart/internal/domain/order"
+	orderMocks "github.com/aifedorov/gophermart/internal/domain/order/mocks"
+	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 )
 
 func TestGetOrdersHandler(t *testing.T) {
@@ -82,19 +81,19 @@ func TestGetOrdersHandler(t *testing.T) {
 	}
 }
 
-func newMockStorageForGetOrders(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := mock_repository.NewMockRepository(ctrl)
+func newMockStorageForGetOrders(ctrl *gomock.Controller) order.Repository {
+	mockRepo := orderMocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
 		GetOrdersByUserID("1").
-		Return([]repository.Order{
-			{ID: "1", UserID: "1", Number: "4532015112830366", Status: repository.New},
+		Return([]order.Order{
+			{ID: "1", UserID: "1", Number: "4532015112830366", Status: order.StatusNew},
 		}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
 		GetOrdersByUserID("2").
-		Return(nil, repository.ErrNotFound).
+		Return(nil, order.ErrOrderNotFound).
 		AnyTimes()
 
 	return mockRepo

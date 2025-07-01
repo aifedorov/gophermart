@@ -1,9 +1,8 @@
 package user
 
-import "github.com/aifedorov/gophermart/internal/repository"
-
 type Repository interface {
-	CreateUser(login, password string) (repository.User, error)
-	GetUserByCredentials(login, password string) (repository.User, error)
-	GetUserByID(userID string) (repository.User, error)
+	CreateUser(login, password string) (User, error)
+	GetUserByCredentials(login, password string) (User, error)
+	GetUserByID(userID string) (User, error)
+	Withdrawal(userID, orderNumber string, sum float64) error
 }
