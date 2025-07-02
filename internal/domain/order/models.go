@@ -1,7 +1,6 @@
 package order
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
@@ -19,26 +18,7 @@ type Order struct {
 	UserID      string
 	Number      string
 	Status      Status
-	Amount      float64
+	Accrual     float64
 	CreatedAt   time.Time
 	ProcessedAt time.Time
-}
-
-type Withdrawal struct {
-	ID          string
-	UserID      string
-	OrderNumber string
-	Sum         float64
-	CreatedAt   time.Time
-	ProcessedAt *time.Time
-}
-
-func NewWithdrawal(userID, orderNumber string, sum float64) *Withdrawal {
-	return &Withdrawal{
-		ID:          uuid.New().String(),
-		UserID:      userID,
-		OrderNumber: orderNumber,
-		Sum:         sum,
-		CreatedAt:   time.Now(),
-	}
 }

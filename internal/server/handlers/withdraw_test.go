@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"github.com/aifedorov/gophermart/internal/api"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	"github.com/aifedorov/gophermart/internal/api"
 	"github.com/aifedorov/gophermart/internal/domain/order"
 	orderMocks "github.com/aifedorov/gophermart/internal/domain/order/mocks"
 	"github.com/aifedorov/gophermart/internal/domain/user"

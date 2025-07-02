@@ -135,13 +135,13 @@ func newMockStorageForCreateOrders(ctrl *gomock.Controller) order.Repository {
 		Return(order.Order{ID: "1", UserID: "1", Number: "4532015112830366"}, nil).
 		AnyTimes()
 
-	// Order already uploaded case - same user
+	// OrderNumber already uploaded case - same user
 	mockRepo.EXPECT().
 		GetOrderByNumber("5555555555554444").
 		Return(order.Order{ID: "2", UserID: "1", Number: "5555555555554444"}, nil).
 		AnyTimes()
 
-	// Order uploaded by another user
+	// OrderNumber uploaded by another user
 	mockRepo.EXPECT().
 		GetOrderByNumber("4111111111111111").
 		Return(order.Order{ID: "3", UserID: "2", Number: "4111111111111111"}, nil).

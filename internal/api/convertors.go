@@ -13,8 +13,8 @@ func ToOrdersResponse(orders []*order.Order) []OrderResponse {
 	respOrders := make([]OrderResponse, len(orders))
 	for i, o := range orders {
 		var accrual *float64
-		if o.Status == order.StatusProcessed && o.Amount > 0 {
-			accrual = &o.Amount
+		if o.Status == order.StatusProcessed && o.Accrual > 0 {
+			accrual = &o.Accrual
 		}
 
 		respOrder := OrderResponse{

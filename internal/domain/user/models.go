@@ -14,7 +14,8 @@ type Balance struct {
 
 type Withdrawal struct {
 	ID          string
-	Order       string
+	UserID      string
+	OrderNumber string
 	Sum         float64
 	ProcessedAt string
 }

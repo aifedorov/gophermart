@@ -62,5 +62,7 @@ func (s *Server) mountHandlers() {
 		r.Use(jwtMiddleware.CheckJWT)
 		r.Post("/api/user/orders", handlers.NewCreateOrdersHandler(s.orderService))
 		r.Get("/api/user/orders", handlers.NewGetOrdersHandler(s.orderService))
+		r.Get("/api/user/balance", handlers.NewBalanceHandler(s.userService))
+		r.Post("/api/user/balance/withdraw", handlers.NewWithdrawHandler(s.userService))
 	})
 }
