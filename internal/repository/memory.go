@@ -19,8 +19,9 @@ type InMemoryStorage struct {
 
 func NewInMemoryStorage() *InMemoryStorage {
 	return &InMemoryStorage{
-		users:  make(map[string]user.User),
-		orders: make(map[string]order.Order),
+		users:       make(map[string]user.User),
+		orders:      make(map[string]order.Order),
+		withdrawals: make(map[string]user.Withdrawal),
 	}
 }
 
@@ -167,9 +168,9 @@ func (ms *InMemoryStorage) Withdrawal(userID, orderNumber string, amount float64
 	ms.users[userObj.Login] = userObj
 
 	withdrawal := user.Withdrawal{
-		ID:    uuid.NewString(),
-		Order: orderNumber,
-		Sum:   amount,
+		ID:          uuid.NewString(),
+		OrderNumber: orderNumber,
+		Sum:         amount,
 	}
 	ms.withdrawals[userObj.ID] = withdrawal
 

@@ -10,18 +10,24 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aifedorov/gophermart/internal/api"
 	"github.com/aifedorov/gophermart/internal/config"
-	"github.com/aifedorov/gophermart/internal/repository"
+	"github.com/aifedorov/gophermart/internal/domain/order"
+	orderMocks "github.com/aifedorov/gophermart/internal/domain/order/mocks"
+	"github.com/aifedorov/gophermart/internal/domain/user"
+	userMocks "github.com/aifedorov/gophermart/internal/domain/user/mocks"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
 )
 
 type ServerTestSuite struct {
 	suite.Suite
-	server *httptest.Server
-	client *http.Client
-	repo   *repository.InMemoryStorage
+	server    *httptest.Server
+	client    *http.Client
+	ctrl      *gomock.Controller
+	userRepo  *userMocks.MockRepository
+	orderRepo *orderMocks.MockRepository
 }
 
 func (suite *ServerTestSuite) SetupSuite() {
@@ -32,13 +38,15 @@ func (suite *ServerTestSuite) SetupSuite() {
 }
 
 func (suite *ServerTestSuite) SetupTest() {
-	suite.repo = repository.NewInMemoryStorage()
+	suite.ctrl = gomock.NewController(suite.T())
+	suite.userRepo = userMocks.NewMockRepository(suite.ctrl)
+	suite.orderRepo = orderMocks.NewMockRepository(suite.ctrl)
 
 	// Clear cookies between tests
 	jar, _ := cookiejar.New(nil)
 	suite.client.Jar = jar
 
-	s := NewServer(newMockConfig(), suite.repo)
+	s := NewServer(newMockConfig(), suite.userRepo, suite.orderRepo)
 	s.mountHandlers()
 
 	suite.server = httptest.NewServer(s.router)
@@ -46,6 +54,7 @@ func (suite *ServerTestSuite) SetupTest() {
 
 func (suite *ServerTestSuite) TearDownTest() {
 	suite.server.Close()
+	suite.ctrl.Finish()
 }
 
 func TestIntegrationSuite(t *testing.T) {
@@ -55,6 +64,17 @@ func TestIntegrationSuite(t *testing.T) {
 func (suite *ServerTestSuite) TestUserRegistrationThenLogin() {
 	login := "test"
 	pass := "pass"
+	userID := "user-id-1"
+
+	// Mock expectations for registration
+	suite.userRepo.EXPECT().
+		CreateUser(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+
+	// Mock expectations for login
+	suite.userRepo.EXPECT().
+		GetUserByCredentials(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
 
 	// 1. Register user
 	resp := suite.registerUser(login, pass)
@@ -70,7 +90,31 @@ func (suite *ServerTestSuite) TestUserRegistrationThenLogin() {
 func (suite *ServerTestSuite) TestCreateOrderThenGetOrders() {
 	login := "testuser"
 	pass := "testpass"
+	userID := "user-id-2"
 	orderNumber := "4532015112830366"
+
+	// Mock expectations for registration and login
+	suite.userRepo.EXPECT().
+		CreateUser(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+	suite.userRepo.EXPECT().
+		GetUserByCredentials(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+
+	// Mock expectations for order creation
+	suite.orderRepo.EXPECT().
+		GetOrderByNumber(orderNumber).
+		Return(order.Order{}, order.ErrOrderNotFound)
+	suite.orderRepo.EXPECT().
+		CreateOrder(userID, orderNumber).
+		Return(order.Order{ID: "order-id-1", UserID: userID, Number: orderNumber, Status: order.StatusNew}, nil)
+
+	// Mock expectations for getting orders
+	suite.orderRepo.EXPECT().
+		GetOrdersByUserID(userID).
+		Return([]order.Order{
+			{ID: "order-id-1", UserID: userID, Number: orderNumber, Status: order.StatusNew},
+		}, nil)
 
 	// 1. Register and login to get auth
 	resp := suite.registerUser(login, pass)
@@ -114,7 +158,29 @@ func (suite *ServerTestSuite) TestProtectedEndpointWithoutAuth() {
 func (suite *ServerTestSuite) TestProtectedEndpointWithAuth() {
 	login := "testuser"
 	pass := "testpass"
+	userID := "user-auth-1"
 	orderNumber := "4532015112830366"
+
+	// Mock expectations for registration and login
+	suite.userRepo.EXPECT().
+		CreateUser(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+	suite.userRepo.EXPECT().
+		GetUserByCredentials(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+
+	// Mock expectations for order creation and retrieval
+	suite.orderRepo.EXPECT().
+		GetOrderByNumber(orderNumber).
+		Return(order.Order{}, order.ErrOrderNotFound)
+	suite.orderRepo.EXPECT().
+		CreateOrder(userID, orderNumber).
+		Return(order.Order{ID: "order-auth-1", UserID: userID, Number: orderNumber, Status: order.StatusNew}, nil)
+	suite.orderRepo.EXPECT().
+		GetOrdersByUserID(userID).
+		Return([]order.Order{
+			{ID: "order-auth-1", UserID: userID, Number: orderNumber, Status: order.StatusNew},
+		}, nil)
 
 	// 1. Register and login to get auth cookie
 	resp := suite.registerUser(login, pass)
@@ -164,6 +230,137 @@ func (suite *ServerTestSuite) TestProtectedEndpointWithAuth() {
 	_ = resp.Body.Close()
 }
 
+func (suite *ServerTestSuite) TestGetUserBalance() {
+	login := "balanceuser"
+	pass := "balancepass"
+	userID := "user-balance-1"
+
+	// Mock expectations for registration and login
+	suite.userRepo.EXPECT().
+		CreateUser(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+	suite.userRepo.EXPECT().
+		GetUserByCredentials(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+
+	// Mock expectations for getting balance
+	suite.userRepo.EXPECT().
+		GetUserByID(userID).
+		Return(user.User{ID: userID, Login: login, Balance: 150.50}, nil)
+
+	// 1. Register and login to get auth
+	resp := suite.registerUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	resp = suite.loginUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	// 2. Get user balance (authenticated)
+	resp = suite.getBalance()
+	suite.Equal(http.StatusOK, resp.StatusCode)
+
+	// 3. Check returned balance
+	var balance api.BalanceResponse
+	err := json.NewDecoder(resp.Body).Decode(&balance)
+	suite.Require().NoError(err)
+	suite.Equal(150.50, balance.Current)
+	suite.Equal(0.0, balance.Withdrawn) // TODO: implement withdrawn calculation
+	_ = resp.Body.Close()
+}
+
+func (suite *ServerTestSuite) TestSuccessfulWithdrawal() {
+	login := "withdrawuser"
+	pass := "withdrawpass"
+	userID := "user-withdraw-1"
+	orderNumber := "2377225624"
+	withdrawAmount := 75.0
+
+	// Mock expectations for registration and login
+	suite.userRepo.EXPECT().
+		CreateUser(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+	suite.userRepo.EXPECT().
+		GetUserByCredentials(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+
+	// Mock expectations for withdrawal
+	suite.userRepo.EXPECT().
+		Withdrawal(userID, orderNumber, withdrawAmount).
+		Return(nil)
+
+	// 1. Register and login to get auth
+	resp := suite.registerUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	resp = suite.loginUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	// 2. Perform withdrawal (authenticated)
+	resp = suite.withdraw(orderNumber, withdrawAmount)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+}
+
+func (suite *ServerTestSuite) TestWithdrawalInsufficientFunds() {
+	login := "pooruser"
+	pass := "poorpass"
+	userID := "user-poor-1"
+	orderNumber := "2377225624"
+	withdrawAmount := 200.0
+
+	// Mock expectations for registration and login
+	suite.userRepo.EXPECT().
+		CreateUser(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+	suite.userRepo.EXPECT().
+		GetUserByCredentials(login, pass).
+		Return(user.User{ID: userID, Login: login}, nil)
+
+	// Mock expectations for withdrawal with insufficient funds
+	suite.userRepo.EXPECT().
+		Withdrawal(userID, orderNumber, withdrawAmount).
+		Return(user.ErrWithdrawInsufficientFunds)
+
+	// 1. Register and login to get auth
+	resp := suite.registerUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	resp = suite.loginUser(login, pass)
+	suite.Equal(http.StatusOK, resp.StatusCode)
+	_ = resp.Body.Close()
+
+	// 2. Attempt withdrawal with insufficient funds (authenticated)
+	resp = suite.withdraw(orderNumber, withdrawAmount)
+	suite.Equal(http.StatusPaymentRequired, resp.StatusCode)
+	_ = resp.Body.Close()
+}
+
+func (suite *ServerTestSuite) TestWithdrawalWithoutAuth() {
+	orderNumber := "2377225624"
+	withdrawAmount := 50.0
+
+	// No mock expectations needed since we're testing unauthenticated access
+
+	// Attempt withdrawal without authentication
+	resp := suite.withdraw(orderNumber, withdrawAmount)
+	suite.Equal(http.StatusUnauthorized, resp.StatusCode)
+	_ = resp.Body.Close()
+}
+
+func (suite *ServerTestSuite) TestBalanceWithoutAuth() {
+	// No mock expectations needed since we're testing unauthenticated access
+
+	// Attempt to get balance without authentication
+	resp := suite.getBalance()
+	suite.Equal(http.StatusUnauthorized, resp.StatusCode)
+	_ = resp.Body.Close()
+}
+
 // Helper methods
 
 func (suite *ServerTestSuite) registerUser(login, password string) *http.Response {
@@ -203,6 +400,23 @@ func (suite *ServerTestSuite) createOrder(orderNumber string) *http.Response {
 
 func (suite *ServerTestSuite) getOrders() *http.Response {
 	resp, err := suite.client.Get(suite.server.URL + "/api/user/orders")
+	suite.Require().NoError(err)
+	return resp
+}
+
+func (suite *ServerTestSuite) getBalance() *http.Response {
+	resp, err := suite.client.Get(suite.server.URL + "/api/user/balance")
+	suite.Require().NoError(err)
+	return resp
+}
+
+func (suite *ServerTestSuite) withdraw(orderNumber string, amount float64) *http.Response {
+	body := fmt.Sprintf(`{"order":"%s","sum":%f}`, orderNumber, amount)
+	resp, err := suite.client.Post(
+		suite.server.URL+"/api/user/balance/withdraw",
+		"application/json",
+		strings.NewReader(body),
+	)
 	suite.Require().NoError(err)
 	return resp
 }

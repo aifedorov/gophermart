@@ -23,6 +23,7 @@ func main() {
 		_ = logger.Log.Sync()
 	}()
 
-	s := server.NewServer(cfg, repository.NewInMemoryStorage())
+	repo := repository.NewInMemoryStorage()
+	s := server.NewServer(cfg, repo, repo)
 	s.Run()
 }

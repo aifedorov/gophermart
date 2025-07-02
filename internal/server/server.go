@@ -11,7 +11,6 @@ import (
 	"github.com/aifedorov/gophermart/internal/domain/order"
 	"github.com/aifedorov/gophermart/internal/domain/user"
 	"github.com/aifedorov/gophermart/internal/logger"
-	"github.com/aifedorov/gophermart/internal/repository"
 	"github.com/aifedorov/gophermart/internal/server/handlers"
 	"github.com/aifedorov/gophermart/internal/server/middleware"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
@@ -20,18 +19,16 @@ import (
 type Server struct {
 	router       *chi.Mux
 	config       config.Config
-	repo         *repository.InMemoryStorage
 	userService  *user.Service
 	orderService *order.Service
 }
 
-func NewServer(cfg config.Config, repo *repository.InMemoryStorage) *Server {
-	userService := user.NewService(repo)
-	orderService := order.NewService(repo)
+func NewServer(cfg config.Config, userRepo user.Repository, orderRepo order.Repository) *Server {
+	userService := user.NewService(userRepo)
+	orderService := order.NewService(orderRepo)
 	return &Server{
 		router:       chi.NewRouter(),
 		config:       cfg,
-		repo:         repo,
 		userService:  userService,
 		orderService: orderService,
 	}
