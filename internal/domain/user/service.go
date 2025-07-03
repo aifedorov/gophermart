@@ -68,3 +68,7 @@ func (s *Service) Withdraw(userID, orderNumber string, amount float64) error {
 	}
 	return s.repo.Withdrawal(userID, orderNumber, amount)
 }
+
+func (s *Service) GetWithdrawals(userID string) ([]Withdrawal, error) {
+	return s.repo.GetWithdrawalsByUserID(userID)
+}

@@ -61,5 +61,6 @@ func (s *Server) mountHandlers() {
 		r.Get("/api/user/orders", handlers.NewGetOrdersHandler(s.orderService))
 		r.Get("/api/user/balance", handlers.NewBalanceHandler(s.userService))
 		r.Post("/api/user/balance/withdraw", handlers.NewWithdrawHandler(s.userService))
+		r.Get("/api/user/withdrawals", handlers.NewWithdrawalsHandler(s.userService))
 	})
 }

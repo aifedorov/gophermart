@@ -5,4 +5,5 @@ type Repository interface {
 	GetUserByCredentials(login, password string) (User, error)
 	GetUserByID(userID string) (User, error)
 	Withdrawal(userID, orderNumber string, sum float64) error
+	GetWithdrawalsByUserID(userID string) ([]Withdrawal, error)
 }

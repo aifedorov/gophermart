@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"errors"
-	"github.com/aifedorov/gophermart/internal/domain/order"
 	"net/http"
 
 	"go.uber.org/zap"
 
+	"github.com/aifedorov/gophermart/internal/domain/order"
 	"github.com/aifedorov/gophermart/internal/domain/user"
 	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/server/middleware/auth"

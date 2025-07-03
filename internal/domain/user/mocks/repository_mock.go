@@ -85,6 +85,21 @@ func (mr *MockRepositoryMockRecorder) GetUserByID(userID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockRepository)(nil).GetUserByID), userID)
 }
 
+// GetWithdrawalsByUserID mocks base method.
+func (m *MockRepository) GetWithdrawalsByUserID(userID string) ([]user.Withdrawal, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWithdrawalsByUserID", userID)
+	ret0, _ := ret[0].([]user.Withdrawal)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWithdrawalsByUserID indicates an expected call of GetWithdrawalsByUserID.
+func (mr *MockRepositoryMockRecorder) GetWithdrawalsByUserID(userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithdrawalsByUserID", reflect.TypeOf((*MockRepository)(nil).GetWithdrawalsByUserID), userID)
+}
+
 // Withdrawal mocks base method.
 func (m *MockRepository) Withdrawal(userID, orderNumber string, sum float64) error {
 	m.ctrl.T.Helper()

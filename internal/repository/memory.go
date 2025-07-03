@@ -177,6 +177,20 @@ func (ms *InMemoryStorage) Withdrawal(userID, orderNumber string, amount float64
 	return nil
 }
 
+func (ms *InMemoryStorage) GetWithdrawalsByUserID(userID string) ([]user.Withdrawal, error) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
+	withdrawals := make([]user.Withdrawal, 0)
+	for _, w := range ms.withdrawals {
+		if w.UserID == userID {
+			withdrawals = append(withdrawals, w)
+		}
+	}
+
+	return withdrawals, nil
+}
+
 func (ms *InMemoryStorage) UpdateOrderStatus(number string, status order.Status) error {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()

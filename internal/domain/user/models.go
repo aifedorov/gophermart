@@ -1,5 +1,7 @@
 package user
 
+import "time"
+
 type User struct {
 	ID       string
 	Login    string
@@ -17,7 +19,7 @@ type Withdrawal struct {
 	UserID      string
 	OrderNumber string
 	Sum         float64
-	ProcessedAt string
+	ProcessedAt time.Time
 }
 
 type RegisterRequest struct {
