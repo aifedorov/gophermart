@@ -1,0 +1,2 @@
+DROP TYPE IF EXISTS OrderType;
+DROP TYPE IF EXISTS OrderStatus;
