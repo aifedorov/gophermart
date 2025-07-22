@@ -1,31 +1,31 @@
 package server
 
 import (
-	"net/http"
-
+	orderDomain "github.com/aifedorov/gophermart/internal/order/domain"
+	orderHandler "github.com/aifedorov/gophermart/internal/order/handler"
+	orderRepository "github.com/aifedorov/gophermart/internal/order/repository"
+	"github.com/aifedorov/gophermart/internal/pkg/config"
+	"github.com/aifedorov/gophermart/internal/pkg/logger"
+	"github.com/aifedorov/gophermart/internal/pkg/middleware"
+	userDomain "github.com/aifedorov/gophermart/internal/user/domain"
+	userHandler "github.com/aifedorov/gophermart/internal/user/handler"
+	userRepository "github.com/aifedorov/gophermart/internal/user/repository"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
-
-	"github.com/aifedorov/gophermart/internal/config"
-	"github.com/aifedorov/gophermart/internal/domain/order"
-	"github.com/aifedorov/gophermart/internal/domain/user"
-	"github.com/aifedorov/gophermart/internal/logger"
-	"github.com/aifedorov/gophermart/internal/server/handlers"
-	"github.com/aifedorov/gophermart/internal/server/middleware"
-	"github.com/aifedorov/gophermart/internal/server/middleware/auth"
+	"net/http"
 )
 
 type Server struct {
 	router       *chi.Mux
 	config       config.Config
-	userService  *user.Service
-	orderService *order.Service
+	userService  *userDomain.Service
+	orderService *orderDomain.Service
 }
 
-func NewServer(cfg config.Config, userRepo user.Repository, orderRepo order.Repository) *Server {
-	userService := user.NewService(userRepo)
-	orderService := order.NewService(orderRepo)
+func NewServer(cfg config.Config, userRepo userRepository.Repository, orderRepo orderRepository.Repository) *Server {
+	userService := userDomain.NewService(userRepo)
+	orderService := orderDomain.NewService(orderRepo)
 	return &Server{
 		router:       chi.NewRouter(),
 		config:       cfg,
@@ -46,21 +46,21 @@ func (s *Server) Run() {
 
 func (s *Server) mountHandlers() {
 
-	jwtMiddleware := auth.NewJWTMiddleware(s.config.SecretKey)
+	jwtMiddleware := middleware.NewJWTMiddleware(s.config.SecretKey)
 
 	s.router.Use(chimiddleware.Compress(6, "application/json", "text/plain", "text/html"))
 	s.router.Use(middleware.RequestLogger)
 	s.router.Use(middleware.ResponseLogger)
 
-	s.router.Post("/api/user/register", handlers.NewRegisterHandler(s.config, s.userService))
-	s.router.Post("/api/user/login", handlers.NewLoginHandler(s.config, s.userService))
+	s.router.Post("/api/user/register", userHandler.NewRegisterHandler(s.config, s.userService))
+	s.router.Post("/api/user/login", userHandler.NewLoginHandler(s.config, s.userService))
 
 	s.router.Group(func(r chi.Router) {
 		r.Use(jwtMiddleware.CheckJWT)
-		r.Post("/api/user/orders", handlers.NewCreateOrdersHandler(s.orderService))
-		r.Get("/api/user/orders", handlers.NewGetOrdersHandler(s.orderService))
-		r.Get("/api/user/balance", handlers.NewBalanceHandler(s.userService))
-		r.Post("/api/user/balance/withdraw", handlers.NewWithdrawHandler(s.userService))
-		r.Get("/api/user/withdrawals", handlers.NewWithdrawalsHandler(s.userService))
+		r.Post("/api/user/orders", orderHandler.NewCreateOrdersHandler(s.orderService))
+		r.Get("/api/user/orders", orderHandler.NewGetOrdersHandler(s.orderService))
+		r.Get("/api/user/balance", userHandler.NewBalanceHandler(s.userService))
+		r.Post("/api/user/balance/withdraw", userHandler.NewWithdrawHandler(s.userService))
+		r.Get("/api/user/withdrawals", userHandler.NewWithdrawalsHandler(s.userService))
 	})
 }

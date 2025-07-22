@@ -1,12 +1,11 @@
 package main
 
 import (
+	"github.com/aifedorov/gophermart/internal/pkg/config"
+	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/repository"
-	"log"
-
-	"github.com/aifedorov/gophermart/internal/config"
-	"github.com/aifedorov/gophermart/internal/logger"
 	"github.com/aifedorov/gophermart/internal/server"
+	"log"
 )
 
 func main() {
