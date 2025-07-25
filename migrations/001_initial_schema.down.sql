@@ -1,0 +1,8 @@
+DROP INDEX IF EXISTS idx_users_login;
+DROP TABLE IF EXISTS users;
+
+DROP INDEX IF EXISTS idx_orders_user_id;
+DROP TABLE IF EXISTS orders;
+
+DROP TYPE IF EXISTS OrderType;
+DROP TYPE IF EXISTS OrderStatus;
