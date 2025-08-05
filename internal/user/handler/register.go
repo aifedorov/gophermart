@@ -6,13 +6,12 @@ import (
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"github.com/aifedorov/gophermart/internal/user/domain"
-	"github.com/aifedorov/gophermart/internal/user/repository"
 	"net/http"
 
 	"go.uber.org/zap"
 )
 
-func NewRegisterHandler(cfg config.Config, userService *domain.Service) http.HandlerFunc {
+func NewRegisterHandler(cfg config.Config, userService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -23,7 +22,7 @@ func NewRegisterHandler(cfg config.Config, userService *domain.Service) http.Han
 			return
 		}
 
-		userReq := repository.RegisterRequest{
+		userReq := domain.RegisterRequest{
 			Login:    body.Login,
 			Password: body.Password,
 		}

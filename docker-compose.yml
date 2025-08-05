@@ -5,8 +5,9 @@ services:
       POSTGRES_DB: gophermart
       POSTGRES_USER: gophermart
       POSTGRES_PASSWORD: password
+      PGPORT: 5433
     ports:
-      - "5432:5432"
+      - "5433:5433"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U gophermart -d gophermart" ]
       interval: 5s
@@ -16,7 +17,7 @@ services:
     image: migrate/migrate
     volumes:
       - ./migrations:/migrations
-    command: [ "-path", "/migrations", "-database", "postgres://gophermart:password@postgres:5432/gophermart?sslmode=disable", "up" ]
+    command: [ "-path", "/migrations", "-database", "postgres://gophermart:password@postgres:5433/gophermart?sslmode=disable", "up" ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -24,7 +25,7 @@ services:
   app:
     build: .
     environment:
-      DATABASE_URI: "postgres://gophermart:password@postgres:5432/gophermart?sslmode=disable"
+      DATABASE_URI: "postgres://gophermart:password@postgres:5433/gophermart?sslmode=disable"
       RUN_ADDRESS: "0.0.0.0:8080"
       SECRET_KEY: "my-secret-key"
     ports:

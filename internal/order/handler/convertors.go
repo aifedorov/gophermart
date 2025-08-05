@@ -1,18 +1,19 @@
 package handler
 
 import (
-	"github.com/aifedorov/gophermart/internal/order/repository"
+	"github.com/aifedorov/gophermart/internal/order/domain"
+	"github.com/shopspring/decimal"
 )
 
-func ToOrdersResponse(orders []*repository.Order) []OrderResponse {
+func ToOrdersResponse(orders []domain.Order) []OrderResponse {
 	if len(orders) == 0 {
 		return nil
 	}
 
 	respOrders := make([]OrderResponse, len(orders))
 	for i, o := range orders {
-		var accrual *float64
-		if o.Status == repository.StatusProcessed && o.Accrual > 0 {
+		var accrual *decimal.Decimal
+		if o.Status == domain.StatusProcessed && o.Accrual.IsPositive() {
 			accrual = &o.Accrual
 		}
 

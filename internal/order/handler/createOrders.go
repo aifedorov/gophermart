@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewCreateOrdersHandler(orderService *domain.Service) http.HandlerFunc {
+func NewCreateOrdersHandler(orderService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "text/plain")
 

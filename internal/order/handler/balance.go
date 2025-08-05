@@ -1,16 +1,14 @@
 package handler
 
 import (
-	"net/http"
-
-	"go.uber.org/zap"
-
+	"github.com/aifedorov/gophermart/internal/order/domain"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
-	"github.com/aifedorov/gophermart/internal/user/domain"
+	"go.uber.org/zap"
+	"net/http"
 )
 
-func NewBalanceHandler(userService *domain.Service) http.HandlerFunc {
+func NewBalanceHandler(orderService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -21,7 +19,7 @@ func NewBalanceHandler(userService *domain.Service) http.HandlerFunc {
 			return
 		}
 
-		balance, err := userService.GetUserBalance(userID)
+		balance, err := orderService.GetUserBalance(userID)
 		if err != nil {
 			logger.Log.Error("failed to get balance", zap.Error(err))
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -29,7 +27,11 @@ func NewBalanceHandler(userService *domain.Service) http.HandlerFunc {
 		}
 
 		rw.WriteHeader(http.StatusOK)
-		if err := encodeJSONResponse(rw, ToBalanceResponse(balance)); err != nil {
+		response := BalanceResponse{
+			Current:   balance.Current,
+			Withdrawn: balance.Withdrawn,
+		}
+		if err := encodeJSONResponse(rw, response); err != nil {
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

@@ -1,17 +1,13 @@
-.PHONY: dev test clean
+.PHONY: docker-up docker-down test
 
-# Start development environment
-dev:
+docker-up:
 	docker-compose up --build
 
-# Run tests
+docker-down:
+	docker-compose down
+
 test:
 	go test ./...
 
-# Clean up
-clean:
-	docker-compose down
-
-# Run locally (need PostgreSQL running)
-local:
-	air
+run:
+	go run cmd/gophermart/main.go

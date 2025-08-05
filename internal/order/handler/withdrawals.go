@@ -2,15 +2,14 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/aifedorov/gophermart/internal/order/domain"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
-	"github.com/aifedorov/gophermart/internal/user/domain"
-	"net/http"
-
 	"go.uber.org/zap"
+	"net/http"
 )
 
-func NewWithdrawalsHandler(userService *domain.Service) http.HandlerFunc {
+func NewWithdrawalsHandler(userService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 

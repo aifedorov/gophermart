@@ -6,13 +6,11 @@ import (
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"github.com/aifedorov/gophermart/internal/user/domain"
-	"github.com/aifedorov/gophermart/internal/user/repository"
-	"net/http"
-
 	"go.uber.org/zap"
+	"net/http"
 )
 
-func NewLoginHandler(cfg config.Config, userService *domain.Service) http.HandlerFunc {
+func NewLoginHandler(cfg config.Config, userService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -23,7 +21,7 @@ func NewLoginHandler(cfg config.Config, userService *domain.Service) http.Handle
 			return
 		}
 
-		userReq := repository.LoginRequest{
+		userReq := domain.LoginRequest{
 			Login:    body.Login,
 			Password: body.Password,
 		}
@@ -37,6 +35,11 @@ func NewLoginHandler(cfg config.Config, userService *domain.Service) http.Handle
 		if errors.Is(err, domain.ErrInvalidCredentials) {
 			logger.Log.Info("invalid login or password")
 			http.Error(rw, "invalid login or password", http.StatusUnauthorized)
+			return
+		}
+		if errors.Is(err, domain.ErrUserAlreadyExists) {
+			logger.Log.Info("user already exists")
+			http.Error(rw, "user already exists", http.StatusBadRequest)
 			return
 		}
 		if err != nil {

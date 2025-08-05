@@ -7,5 +7,6 @@ var (
 	ErrOrderUploadedByAnotherUser = errors.New("order uploaded by another user")
 	ErrInvalidOrderNumber         = errors.New("invalid order number format")
 	ErrOrderNotFound              = errors.New("order not found")
-	ErrAlreadyExists              = errors.New("order already exists")
+	ErrWithdrawNegativeAmount     = errors.New("withdraw amount should be positive")
+	ErrWithdrawInsufficientFunds  = errors.New("withdraw insufficient funds")
 )

@@ -3,8 +3,9 @@ package handler
 import (
 	"errors"
 	"github.com/aifedorov/gophermart/internal/user/domain"
-	"github.com/aifedorov/gophermart/internal/user/repository"
+	repository "github.com/aifedorov/gophermart/internal/user/repository/db"
 	userMocks "github.com/aifedorov/gophermart/internal/user/repository/mocks"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -47,7 +48,6 @@ func TestLoginHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				body:        `{"id":"1","login":"loginExists","password":"pass"}`,
 			},
 		},
 		{
@@ -67,7 +67,7 @@ func TestLoginHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/login",
 			body: `{
-				"login": "test",
+				"login": "loginExists",
 				"password": "wrongPass"
 			}`,
 			want: want{
@@ -133,23 +133,21 @@ func TestLoginHandler(t *testing.T) {
 func newMockStorageForLogin(ctrl *gomock.Controller) repository.Repository {
 	mockRepo := userMocks.NewMockRepository(ctrl)
 
+	// Generate bcrypt hash for password "test"
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("test"), bcrypt.DefaultCost)
+
 	mockRepo.EXPECT().
-		GetUserByCredentials("loginExists", "test").
-		Return(repository.User{ID: "1", Login: "loginExists", Password: "test"}, nil).
+		GetUserByUsername("loginExists").
+		Return(repository.User{Username: "loginExists", PasswordHash: string(hashedPassword)}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		GetUserByCredentials("loginNotExists", "test").
-		Return(repository.User{}, domain.ErrNotFound).
+		GetUserByUsername("loginNotExists").
+		Return(repository.User{}, repository.ErrUserNotFound).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		GetUserByCredentials("test", "wrongPass").
-		Return(repository.User{}, domain.ErrInvalidateCredentials).
-		AnyTimes()
-
-	mockRepo.EXPECT().
-		GetUserByCredentials("test", "test").
+		GetUserByUsername("test").
 		Return(repository.User{}, errors.New("internal error")).
 		AnyTimes()
 

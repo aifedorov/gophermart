@@ -3,15 +3,18 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	orderDomain "github.com/aifedorov/gophermart/internal/order/domain"
+	repository "github.com/aifedorov/gophermart/internal/order/repository/db"
+	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
-	"github.com/aifedorov/gophermart/internal/user/domain"
-	"github.com/aifedorov/gophermart/internal/user/repository"
-	userMocks "github.com/aifedorov/gophermart/internal/user/repository/mocks"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestWithdrawalsHandler(t *testing.T) {
@@ -25,29 +28,30 @@ func TestWithdrawalsHandler(t *testing.T) {
 		body       []WithdrawalResponse
 	}
 
-	testWithdrawals := []repository.Withdrawal{
+	fixedTime := time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)
+	testWithdrawals := []repository.Order{
 		{
-			ID:          "1",
-			UserID:      "1",
-			OrderNumber: "2377225624",
-			Sum:         500.0,
+			Number:      "2377225624",
+			Amount:      decimal.NewFromInt(500),
+			ProcessedAt: pgtype.Timestamptz{Time: fixedTime, Valid: true},
 		},
 		{
-			ID:          "2",
-			UserID:      "1",
-			OrderNumber: "1234567890",
-			Sum:         250.0,
+			Number:      "1234567890",
+			Amount:      decimal.NewFromInt(250),
+			ProcessedAt: pgtype.Timestamptz{Time: fixedTime, Valid: true},
 		},
 	}
 
 	expectedResponse := []WithdrawalResponse{
 		{
-			Order: "2377225624",
-			Sum:   500.0,
+			Order:       "2377225624",
+			Sum:         decimal.NewFromInt(500),
+			ProcessedAt: fixedTime,
 		},
 		{
-			Order: "1234567890",
-			Sum:   250.0,
+			Order:       "1234567890",
+			Sum:         decimal.NewFromInt(250),
+			ProcessedAt: fixedTime,
 		},
 	}
 
@@ -56,7 +60,7 @@ func TestWithdrawalsHandler(t *testing.T) {
 		method      string
 		path        string
 		userID      string
-		mock        func(mockRepo *userMocks.MockRepository)
+		mock        func(mockRepo *orderMocks.MockRepository)
 		want        want
 		expectError bool
 		errorType   error
@@ -65,10 +69,10 @@ func TestWithdrawalsHandler(t *testing.T) {
 			name:   "successful retrieval of withdrawals",
 			method: http.MethodGet,
 			path:   "//user/withdrawals",
-			userID: "1",
-			mock: func(mockRepo *userMocks.MockRepository) {
+			userID: TestUserID1.String(),
+			mock: func(mockRepo *orderMocks.MockRepository) {
 				mockRepo.EXPECT().
-					GetWithdrawalsByUserID("1").
+					GetWithdrawalsByUserID(TestUserID1.String()).
 					Return(testWithdrawals, nil).
 					Times(1)
 			},
@@ -81,11 +85,11 @@ func TestWithdrawalsHandler(t *testing.T) {
 			name:   "no withdrawals found - returns 204",
 			method: http.MethodGet,
 			path:   "/api/user/withdrawals",
-			userID: "1",
-			mock: func(mockRepo *userMocks.MockRepository) {
+			userID: TestUserID1.String(),
+			mock: func(mockRepo *orderMocks.MockRepository) {
 				mockRepo.EXPECT().
-					GetWithdrawalsByUserID("1").
-					Return([]repository.Withdrawal{}, nil).
+					GetWithdrawalsByUserID(TestUserID1.String()).
+					Return([]repository.Order{}, nil).
 					Times(1)
 			},
 			want: want{
@@ -95,7 +99,7 @@ func TestWithdrawalsHandler(t *testing.T) {
 		{
 			name:   "unauthorized - no user id in context",
 			method: http.MethodGet,
-			mock:   func(mockRepo *userMocks.MockRepository) {},
+			mock:   func(mockRepo *orderMocks.MockRepository) {},
 			path:   "/api/user/withdrawals",
 			want: want{
 				statusCode: http.StatusUnauthorized,
@@ -105,10 +109,10 @@ func TestWithdrawalsHandler(t *testing.T) {
 			name:   "internal server error - repository error",
 			method: http.MethodGet,
 			path:   "/api/user/withdrawals",
-			userID: "1",
-			mock: func(mockRepo *userMocks.MockRepository) {
+			userID: TestUserID1.String(),
+			mock: func(mockRepo *orderMocks.MockRepository) {
 				mockRepo.EXPECT().
-					GetWithdrawalsByUserID("1").
+					GetWithdrawalsByUserID(TestUserID1.String()).
 					Return(nil, assert.AnError).
 					Times(1)
 			},
@@ -123,11 +127,11 @@ func TestWithdrawalsHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockUserRepo := userMocks.NewMockRepository(ctrl)
-			tt.mock(mockUserRepo)
+			mockOrderRepo := orderMocks.NewMockRepository(ctrl)
+			tt.mock(mockOrderRepo)
 
-			userService := domain.NewService(mockUserRepo)
-			handlerFunc := NewWithdrawalsHandler(userService)
+			orderService := orderDomain.NewService(mockOrderRepo)
+			handlerFunc := NewWithdrawalsHandler(orderService)
 
 			req := httptest.NewRequest(tt.method, tt.path, nil)
 			req.Header.Set("Content-Type", "application/json")

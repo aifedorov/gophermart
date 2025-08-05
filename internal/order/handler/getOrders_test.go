@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"github.com/aifedorov/gophermart/internal/order/domain"
-	"github.com/aifedorov/gophermart/internal/order/repository"
+	"github.com/aifedorov/gophermart/internal/order/repository/db"
 	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"net/http"
@@ -42,7 +42,7 @@ func TestGetOrdersHandler(t *testing.T) {
 			name:   "return order list",
 			method: http.MethodGet,
 			path:   "/api/user/orders",
-			userID: "1",
+			userID: TestUserID1.String(),
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
@@ -85,14 +85,14 @@ func newMockStorageForGetOrders(ctrl *gomock.Controller) repository.Repository {
 	mockRepo := orderMocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
-		GetOrdersByUserID("1").
+		GetOrdersByUserID(TestUserID1.String()).
 		Return([]repository.Order{
-			{ID: "1", UserID: "1", Number: "4532015112830366", Status: repository.StatusNew},
+			{Number: "4532015112830366", Status: repository.OrderstatusNEW},
 		}, nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		GetOrdersByUserID("2").
+		GetOrdersByUserID("550e8400-e29b-41d4-a716-446655440002").
 		Return(nil, domain.ErrOrderNotFound).
 		AnyTimes()
 

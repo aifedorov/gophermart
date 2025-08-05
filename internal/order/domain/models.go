@@ -1,6 +1,7 @@
-package repository
+package domain
 
 import (
+	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -18,7 +19,20 @@ type Order struct {
 	UserID      string
 	Number      string
 	Status      Status
-	Accrual     float64
+	Accrual     decimal.Decimal
 	CreatedAt   time.Time
+	ProcessedAt time.Time
+}
+
+type Balance struct {
+	Current   decimal.Decimal
+	Withdrawn decimal.Decimal
+}
+
+type Withdrawal struct {
+	ID          string
+	UserID      string
+	OrderNumber string
+	Sum         decimal.Decimal
 	ProcessedAt time.Time
 }

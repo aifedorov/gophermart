@@ -5,13 +5,13 @@ import (
 	"github.com/aifedorov/gophermart/internal/order/domain"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
-	domain2 "github.com/aifedorov/gophermart/internal/user/domain"
+
 	"net/http"
 
 	"go.uber.org/zap"
 )
 
-func NewWithdrawHandler(userService *domain2.Service) http.HandlerFunc {
+func NewWithdrawHandler(orderService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
@@ -35,15 +35,20 @@ func NewWithdrawHandler(userService *domain2.Service) http.HandlerFunc {
 			return
 		}
 
-		err = userService.Withdraw(userID, body.Order, body.Sum)
-		if errors.Is(err, domain2.ErrWithdrawNegativeAmount) {
+		_, err = orderService.Withdraw(userID, body.Order, body.Sum)
+		if errors.Is(err, domain.ErrWithdrawNegativeAmount) {
 			logger.Log.Info("negative amount of money to withdraw")
 			http.Error(rw, http.StatusText(http.StatusPaymentRequired), http.StatusPaymentRequired)
 			return
 		}
-		if errors.Is(err, domain2.ErrWithdrawInsufficientFunds) {
+		if errors.Is(err, domain.ErrWithdrawInsufficientFunds) {
 			logger.Log.Info("insufficient funds to withdraw")
 			http.Error(rw, http.StatusText(http.StatusPaymentRequired), http.StatusPaymentRequired)
+			return
+		}
+		if errors.Is(err, domain.ErrOrderAlreadyUploaded) {
+			logger.Log.Info("order already uploaded")
+			http.Error(rw, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 			return
 		}
 		if err != nil {

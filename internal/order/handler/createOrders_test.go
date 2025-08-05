@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"github.com/aifedorov/gophermart/internal/order/domain"
-	"github.com/aifedorov/gophermart/internal/order/repository"
+	"github.com/aifedorov/gophermart/internal/order/repository/db"
 	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"net/http"
@@ -42,7 +42,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   `4532015112830366`,
-			userID: "1",
+			userID: TestUserID1.String(),
 			want: want{
 				statusCode:  http.StatusAccepted,
 				contentType: "text/plain",
@@ -53,7 +53,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   `1234567890`,
-			userID: "1",
+			userID: TestUserID1.String(),
 			want: want{
 				statusCode: http.StatusUnprocessableEntity,
 			},
@@ -63,7 +63,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   `5555555555554444`,
-			userID: "1",
+			userID: TestUserID1.String(),
 			want: want{
 				statusCode: http.StatusOK,
 			},
@@ -73,7 +73,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   `4111111111111111`,
-			userID: "1",
+			userID: TestUserID1.String(),
 			want: want{
 				statusCode: http.StatusConflict,
 			},
@@ -92,7 +92,7 @@ func TestCreateOrdersHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/api/user/orders",
 			body:   "",
-			userID: "1",
+			userID: TestUserID1.String(),
 			want: want{
 				statusCode: http.StatusBadRequest,
 			},
@@ -131,20 +131,28 @@ func newMockStorageForCreateOrders(ctrl *gomock.Controller) repository.Repositor
 		Return(repository.Order{}, domain.ErrOrderNotFound).
 		AnyTimes()
 	mockRepo.EXPECT().
-		CreateOrder("1", "4532015112830366").
-		Return(repository.Order{ID: "1", UserID: "1", Number: "4532015112830366"}, nil).
+		CreateTopUpOrder(TestUserID1.String(), "4532015112830366").
+		Return(repository.Order{}, nil).
 		AnyTimes()
 
 	// OrderNumber already uploaded case - same user
 	mockRepo.EXPECT().
 		GetOrderByNumber("5555555555554444").
-		Return(repository.Order{ID: "2", UserID: "1", Number: "5555555555554444"}, nil).
+		Return(repository.Order{UserID: TestUserID1, Number: "5555555555554444"}, nil).
+		AnyTimes()
+	mockRepo.EXPECT().
+		CreateTopUpOrder(TestUserID1.String(), "5555555555554444").
+		Return(repository.Order{}, repository.ErrOrderAlreadyExists).
 		AnyTimes()
 
 	// OrderNumber uploaded by another user
 	mockRepo.EXPECT().
 		GetOrderByNumber("4111111111111111").
-		Return(repository.Order{ID: "3", UserID: "2", Number: "4111111111111111"}, nil).
+		Return(repository.Order{UserID: TestUserID2, Number: "4111111111111111"}, nil).
+		AnyTimes()
+	mockRepo.EXPECT().
+		CreateTopUpOrder(TestUserID1.String(), "4111111111111111").
+		Return(repository.Order{}, repository.ErrOrderAddedByAnotherUser).
 		AnyTimes()
 
 	return mockRepo

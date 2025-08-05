@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewGetOrdersHandler(orderService *domain.Service) http.HandlerFunc {
+func NewGetOrdersHandler(orderService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 

@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
+	orderDomain "github.com/aifedorov/gophermart/internal/order/domain"
+	repository "github.com/aifedorov/gophermart/internal/order/repository/db"
+	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
-	"github.com/aifedorov/gophermart/internal/user/domain"
-	"github.com/aifedorov/gophermart/internal/user/repository"
-	userMocks "github.com/aifedorov/gophermart/internal/user/repository/mocks"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -22,8 +23,8 @@ func TestBalanceHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := newMockStorageBalanceHandler(ctrl)
-	userService := domain.NewService(repo)
-	handlerFunc := NewBalanceHandler(userService)
+	orderService := orderDomain.NewService(repo)
+	handlerFunc := NewBalanceHandler(orderService)
 
 	type want struct {
 		contentType string
@@ -42,22 +43,22 @@ func TestBalanceHandler(t *testing.T) {
 			name:   "return user balance",
 			method: http.MethodGet,
 			path:   "/api/user/balance",
-			userID: "1",
+			userID: TestUserID1.String(),
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				body:        `{"current":100,"withdrawn":0}` + "\n",
+				body:        `{"current":"100","withdrawn":"0"}` + "\n",
 			},
 		},
 		{
 			name:   "zero balance",
 			method: http.MethodGet,
 			path:   "/api/user/balance",
-			userID: "2",
+			userID: "550e8400-e29b-41d4-a716-446655440002",
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				body:        `{"current":0,"withdrawn":0}` + "\n",
+				body:        `{"current":"0","withdrawn":"0"}` + "\n",
 			},
 		},
 		{
@@ -106,26 +107,46 @@ func TestBalanceHandler(t *testing.T) {
 }
 
 func newMockStorageBalanceHandler(ctrl *gomock.Controller) repository.Repository {
-	mockRepo := userMocks.NewMockRepository(ctrl)
+	mockRepo := orderMocks.NewMockRepository(ctrl)
 
 	mockRepo.EXPECT().
-		GetUserByID("1").
-		Return(repository.User{ID: "1", Login: "test", Password: "test", Balance: 100}, nil).
+		GetUserBalanceByUserID(TestUserID1.String()).
+		Return(decimal.NewFromInt(100), nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		GetUserByID("2").
-		Return(repository.User{ID: "2", Login: "zero", Password: "zero"}, nil).
+		GetUserWithdrawByUserID(TestUserID1.String()).
+		Return(decimal.NewFromInt(0), nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		GetUserByID("4").
-		Return(repository.User{}, domain.ErrNotFound).
+		GetUserBalanceByUserID("550e8400-e29b-41d4-a716-446655440002").
+		Return(decimal.NewFromInt(0), nil).
 		AnyTimes()
 
 	mockRepo.EXPECT().
-		GetUserByID("5").
-		Return(repository.User{}, assert.AnError).
+		GetUserWithdrawByUserID("550e8400-e29b-41d4-a716-446655440002").
+		Return(decimal.NewFromInt(0), nil).
+		AnyTimes()
+
+	mockRepo.EXPECT().
+		GetUserBalanceByUserID("4").
+		Return(decimal.Decimal{}, orderDomain.ErrOrderNotFound).
+		AnyTimes()
+
+	mockRepo.EXPECT().
+		GetUserWithdrawByUserID("4").
+		Return(decimal.Decimal{}, orderDomain.ErrOrderNotFound).
+		AnyTimes()
+
+	mockRepo.EXPECT().
+		GetUserBalanceByUserID("5").
+		Return(decimal.Decimal{}, assert.AnError).
+		AnyTimes()
+
+	mockRepo.EXPECT().
+		GetUserWithdrawByUserID("5").
+		Return(decimal.Decimal{}, assert.AnError).
 		AnyTimes()
 
 	return mockRepo
