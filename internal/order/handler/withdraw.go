@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+
 	"github.com/aifedorov/gophermart/internal/order/domain"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
@@ -35,7 +36,7 @@ func NewWithdrawHandler(orderService domain.Service) http.HandlerFunc {
 			return
 		}
 
-		_, err = orderService.Withdraw(userID, body.Order, body.Sum)
+		_, status, err := orderService.Withdraw(userID, body.Order, body.Sum)
 		if errors.Is(err, domain.ErrWithdrawNegativeAmount) {
 			logger.Log.Info("negative amount of money to withdraw")
 			http.Error(rw, http.StatusText(http.StatusPaymentRequired), http.StatusPaymentRequired)
@@ -46,17 +47,19 @@ func NewWithdrawHandler(orderService domain.Service) http.HandlerFunc {
 			http.Error(rw, http.StatusText(http.StatusPaymentRequired), http.StatusPaymentRequired)
 			return
 		}
-		if errors.Is(err, domain.ErrOrderAlreadyUploaded) {
-			logger.Log.Info("order already uploaded")
-			http.Error(rw, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
-			return
-		}
 		if err != nil {
 			logger.Log.Error("failed to withdraw money", zap.Error(err))
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
-		rw.WriteHeader(http.StatusOK)
+		switch status {
+		case domain.CreateStatusSuccess:
+			rw.WriteHeader(http.StatusOK)
+		case domain.CreateStatusAlreadyUploaded:
+			http.Error(rw, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		default:
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	}
 }

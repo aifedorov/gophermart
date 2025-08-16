@@ -2,14 +2,15 @@ package handler
 
 import (
 	"context"
-	"github.com/aifedorov/gophermart/internal/order/domain"
-	"github.com/aifedorov/gophermart/internal/order/repository/db"
-	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
-	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/aifedorov/gophermart/internal/order/domain"
+	"github.com/aifedorov/gophermart/internal/order/repository/db"
+	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
+	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -132,7 +133,7 @@ func newMockStorageForCreateOrders(ctrl *gomock.Controller) repository.Repositor
 		AnyTimes()
 	mockRepo.EXPECT().
 		CreateTopUpOrder(TestUserID1.String(), "4532015112830366").
-		Return(repository.Order{}, nil).
+		Return(repository.Order{}, true, nil).
 		AnyTimes()
 
 	// OrderNumber already uploaded case - same user
@@ -142,7 +143,7 @@ func newMockStorageForCreateOrders(ctrl *gomock.Controller) repository.Repositor
 		AnyTimes()
 	mockRepo.EXPECT().
 		CreateTopUpOrder(TestUserID1.String(), "5555555555554444").
-		Return(repository.Order{}, repository.ErrOrderAlreadyExists).
+		Return(repository.Order{UserID: TestUserID1, Number: "5555555555554444"}, false, nil).
 		AnyTimes()
 
 	// OrderNumber uploaded by another user
@@ -152,7 +153,7 @@ func newMockStorageForCreateOrders(ctrl *gomock.Controller) repository.Repositor
 		AnyTimes()
 	mockRepo.EXPECT().
 		CreateTopUpOrder(TestUserID1.String(), "4111111111111111").
-		Return(repository.Order{}, repository.ErrOrderAddedByAnotherUser).
+		Return(repository.Order{UserID: TestUserID2, Number: "4111111111111111"}, false, nil).
 		AnyTimes()
 
 	return mockRepo

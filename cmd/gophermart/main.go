@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"log"
+
+	"github.com/aifedorov/gophermart/internal/client/accrual"
 	orderDomain "github.com/aifedorov/gophermart/internal/order/domain"
 	orderRepository "github.com/aifedorov/gophermart/internal/order/repository/db"
 	"github.com/aifedorov/gophermart/internal/pkg/config"
@@ -11,7 +14,6 @@ import (
 	userDomain "github.com/aifedorov/gophermart/internal/user/domain"
 	userRepository "github.com/aifedorov/gophermart/internal/user/repository/db"
 	"go.uber.org/zap"
-	"log"
 )
 
 func main() {
@@ -40,11 +42,30 @@ func main() {
 	userRepo := userRepository.NewRepository(ctx, db.DBPool())
 	userService := userDomain.NewService(userRepo)
 
+	accrualClient := accrual.NewHTTPClient(cfg)
+	defer func() {
+		err := accrualClient.Close()
+		if err != nil {
+			logger.Log.Error("accrualclient: error closing http client", zap.Error(err))
+		}
+	}()
+
 	orderRepo := orderRepository.NewRepository(ctx, db.DBPool())
 	orderService := orderDomain.NewService(orderRepo)
+
+	poller := orderDomain.NewPoller(ctx, orderRepo, accrualClient)
+	checker := orderDomain.NewChecker(ctx, orderRepo, poller)
+	go func() {
+		err := checker.Run()
+		if err != nil {
+			logger.Log.Fatal("checker: error running checker", zap.Error(err))
+		}
+	}()
 
 	s := server.NewServer(cfg, userService, orderService)
 	if err := s.Run(); err != nil {
 		logger.Log.Fatal("server: failed to run", zap.Error(err))
 	}
+
+	// TODO: Handle shoutdown
 }

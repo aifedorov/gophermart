@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 )
 
@@ -44,10 +45,34 @@ const getOrderByNumber = `-- name: GetOrderByNumber :one
 SELECT id, user_id, amount, number, type, status, processed_at, created_at
 FROM orders
 WHERE number = $1
+LIMIT 1
 `
 
 func (q *Queries) GetOrderByNumber(ctx context.Context, number string) (Order, error) {
 	row := q.db.QueryRow(ctx, getOrderByNumber, number)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Amount,
+		&i.Number,
+		&i.Type,
+		&i.Status,
+		&i.ProcessedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getOrderByStatus = `-- name: GetOrderByStatus :one
+SELECT id, user_id, amount, number, type, status, processed_at, created_at
+FROM orders
+WHERE status = $1
+LIMIT 1
+`
+
+func (q *Queries) GetOrderByStatus(ctx context.Context, status Orderstatus) (Order, error) {
+	row := q.db.QueryRow(ctx, getOrderByStatus, status)
 	var i Order
 	err := row.Scan(
 		&i.ID,
@@ -104,9 +129,10 @@ SELECT COALESCE(SUM(
                             WHEN 'DEBIT' THEN -amount
                             ELSE 0
                             END
-                ), 0::NUMERIC)::NUMERIC(10, 2)
+                ), 0::NUMERIC(10, 2))::NUMERIC(10, 2)
 FROM orders
-WHERE user_id = $1 AND status = 'PROCESSED'
+WHERE user_id = $1
+  AND status = 'PROCESSED'
 `
 
 func (q *Queries) GetUserBalanceByUserID(ctx context.Context, userID uuid.UUID) (decimal.Decimal, error) {
@@ -169,19 +195,26 @@ func (q *Queries) GetWithdrawalsByUserID(ctx context.Context, userID uuid.UUID) 
 	return items, nil
 }
 
-const updateOrderStatus = `-- name: UpdateOrderStatus :exec
+const updateOrderByNumber = `-- name: UpdateOrderByNumber :exec
 UPDATE orders
-SET status = $2
+SET status = $2, amount = $3, processed_at = $4
 WHERE number = $1
 `
 
-type UpdateOrderStatusParams struct {
-	Number string
-	Status Orderstatus
+type UpdateOrderByNumberParams struct {
+	Number      string
+	Status      Orderstatus
+	Amount      decimal.Decimal
+	ProcessedAt pgtype.Timestamptz
 }
 
-func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) error {
-	_, err := q.db.Exec(ctx, updateOrderStatus, arg.Number, arg.Status)
+func (q *Queries) UpdateOrderByNumber(ctx context.Context, arg UpdateOrderByNumberParams) error {
+	_, err := q.db.Exec(ctx, updateOrderByNumber,
+		arg.Number,
+		arg.Status,
+		arg.Amount,
+		arg.ProcessedAt,
+	)
 	return err
 }
 

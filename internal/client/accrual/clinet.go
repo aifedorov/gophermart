@@ -1,63 +1,47 @@
 package accrual
 
 import (
-	"encoding/json"
+	"github.com/aifedorov/gophermart/internal/pkg/config"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"go.uber.org/zap"
-	"net/http"
-	"strings"
+	"resty.dev/v3"
 )
 
-type Order struct {
-	Order   string `json:"order"`
-	Status  string `json:"status"`
-	Accrual int    `json:"accrual"`
+type HTTPClient interface {
+	GetAccrualByOrderNumber(orderNumber string) (OrderResponse, bool, error)
+	Close() error
 }
 
-type Client interface {
-	getAccrualByOrderNumber(orderNumber string) (Order, error)
-}
-
-type HTTPClient struct {
-	client        *http.Client
+type httpClient struct {
+	client        *resty.Client
 	ListenAddress string
 }
 
-func NewHTTPClient() Client {
-	return &HTTPClient{
-		client:        &http.Client{},
-		ListenAddress: ":8084",
+func NewHTTPClient(cfg config.Config) HTTPClient {
+	return &httpClient{
+		client:        resty.New(),
+		ListenAddress: cfg.AccrualSystemAddress,
 	}
 }
 
-var _ Client = (*HTTPClient)(nil)
+func (c *httpClient) Close() error {
+	return c.client.Close()
+}
 
-func (c *HTTPClient) getAccrualByOrderNumber(orderNumber string) (Order, error) {
-	request, err := http.NewRequest(http.MethodPost, c.ListenAddress, strings.NewReader(orderNumber))
+func (c *httpClient) GetAccrualByOrderNumber(orderNumber string) (OrderResponse, bool, error) {
+	res, err := c.client.R().
+		SetResult(&OrderResponse{}).
+		SetHeader("Accept", "application/json").
+		Get(c.ListenAddress + "/api/orders/" + orderNumber)
+
 	if err != nil {
-		logger.Log.Error("accrualclient: failed to create request", zap.Error(err))
-		return Order{}, err
+		logger.Log.Error("accrualclient: order processing failed", zap.Error(err))
+		return OrderResponse{}, false, err
 	}
-	request.Header.Add("Content-Length", "0")
-	response, err := c.client.Do(request)
-	if err != nil {
-		logger.Log.Error("accrualclient: failed to send request", zap.Error(err))
-		return Order{}, err
+	if res.StatusCode() != 200 {
+		logger.Log.Error("accrualclient: order processing failed", zap.Int("status", res.StatusCode()))
+		return OrderResponse{}, false, nil
 	}
-
-	defer func() {
-		err := response.Body.Close()
-		if err != nil {
-			logger.Log.Error("accrualclient: failed to close response body", zap.Error(err))
-			return
-		}
-	}()
-
-	var order Order
-	if err := json.NewDecoder(response.Body).Decode(&order); err != nil {
-		logger.Log.Error("accrualclient: failed to decode response body", zap.Error(err))
-		return Order{}, err
-	}
-
-	return order, nil
+	result := res.Result().(*OrderResponse)
+	return *result, true, nil
 }

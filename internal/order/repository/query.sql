@@ -11,12 +11,21 @@ WHERE user_id = $1;
 -- name: GetOrderByNumber :one
 SELECT *
 FROM orders
+WHERE number = $1
+LIMIT 1;
+
+-- name: UpdateOrderByNumber :exec
+UPDATE orders
+SET status       = $2,
+    amount       = $3,
+    processed_at = $4
 WHERE number = $1;
 
--- name: UpdateOrderStatus :exec
-UPDATE orders
-SET status = $2
-WHERE number = $1;
+-- name: GetOrderByStatus :one
+SELECT *
+FROM orders
+WHERE status = $1
+LIMIT 1;
 
 -- name: Withdrawal :one
 INSERT INTO orders (user_id, number, amount, type)

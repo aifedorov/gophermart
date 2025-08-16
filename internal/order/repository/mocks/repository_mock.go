@@ -42,12 +42,13 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // CreateTopUpOrder mocks base method.
-func (m *MockRepository) CreateTopUpOrder(userID, orderNumber string) (repository.Order, error) {
+func (m *MockRepository) CreateTopUpOrder(userID, orderNumber string) (repository.Order, bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateTopUpOrder", userID, orderNumber)
 	ret0, _ := ret[0].(repository.Order)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // CreateTopUpOrder indicates an expected call of CreateTopUpOrder.
@@ -69,6 +70,21 @@ func (m *MockRepository) CreateWithdrawalOrder(userID, orderNumber string, amoun
 func (mr *MockRepositoryMockRecorder) CreateWithdrawalOrder(userID, orderNumber, amount any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWithdrawalOrder", reflect.TypeOf((*MockRepository)(nil).CreateWithdrawalOrder), userID, orderNumber, amount)
+}
+
+// GetFirstOrderByStatus mocks base method.
+func (m *MockRepository) GetFirstOrderByStatus(status repository.Orderstatus) (repository.Order, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFirstOrderByStatus", status)
+	ret0, _ := ret[0].(repository.Order)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFirstOrderByStatus indicates an expected call of GetFirstOrderByStatus.
+func (mr *MockRepositoryMockRecorder) GetFirstOrderByStatus(status any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFirstOrderByStatus", reflect.TypeOf((*MockRepository)(nil).GetFirstOrderByStatus), status)
 }
 
 // GetOrderByNumber mocks base method.
@@ -146,16 +162,16 @@ func (mr *MockRepositoryMockRecorder) GetWithdrawalsByUserID(userID any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithdrawalsByUserID", reflect.TypeOf((*MockRepository)(nil).GetWithdrawalsByUserID), userID)
 }
 
-// UpdateOrderStatus mocks base method.
-func (m *MockRepository) UpdateOrderStatus(number string, status repository.Orderstatus) error {
+// UpdateOrderStatusByNumber mocks base method.
+func (m *MockRepository) UpdateOrderStatusByNumber(number string, status repository.Orderstatus, amount *decimal.Decimal) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateOrderStatus", number, status)
+	ret := m.ctrl.Call(m, "UpdateOrderStatusByNumber", number, status, amount)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateOrderStatus indicates an expected call of UpdateOrderStatus.
-func (mr *MockRepositoryMockRecorder) UpdateOrderStatus(number, status any) *gomock.Call {
+// UpdateOrderStatusByNumber indicates an expected call of UpdateOrderStatusByNumber.
+func (mr *MockRepositoryMockRecorder) UpdateOrderStatusByNumber(number, status, amount any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrderStatus", reflect.TypeOf((*MockRepository)(nil).UpdateOrderStatus), number, status)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrderStatusByNumber", reflect.TypeOf((*MockRepository)(nil).UpdateOrderStatusByNumber), number, status, amount)
 }

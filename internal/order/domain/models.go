@@ -1,8 +1,9 @@
 package domain
 
 import (
-	"github.com/shopspring/decimal"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type Status string
@@ -12,6 +13,15 @@ const (
 	StatusProcessing Status = "processing"
 	StatusProcessed  Status = "processed"
 	StatusInvalid    Status = "invalid"
+)
+
+type CreateStatus int
+
+const (
+	CreateStatusSuccess CreateStatus = iota
+	CreateStatusAlreadyUploaded
+	CreateStatusUploadedByAnotherUser
+	CreateStatusFailed
 )
 
 type Order struct {
