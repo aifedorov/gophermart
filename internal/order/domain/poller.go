@@ -7,6 +7,7 @@ import (
 	"github.com/aifedorov/gophermart/internal/client/accrual"
 	repository "github.com/aifedorov/gophermart/internal/order/repository/db"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -66,15 +67,26 @@ func (p *poller) StartPollingWithOrderNumber(number string) error {
 			logger.Log.Debug("poller: finish polling", zap.String("orderNumber", number), zap.Any("order status", res.Status))
 			return nil
 		case accrual.StatusProcessed:
-			err := p.repo.UpdateOrderStatusByNumber(number, repository.OrderstatusPROCESSED, res.Amount)
+			var amount decimal.Decimal
+			if res.Amount != nil {
+				amount = decimal.NewFromFloat(*res.Amount)
+			}
+
+			err := p.repo.UpdateOrderStatusByNumber(number, repository.OrderstatusPROCESSED, &amount)
 			if err != nil {
 				return err
 			}
-			logger.Log.Debug("poller: finish polling", zap.String("orderNumber", number), zap.Any("order status", res.Status))
+			logger.Log.Debug("poller: finish polling", zap.String("orderNumber", number), zap.Any("order status", res.Status), zap.Any("amount", res.Amount))
 			return nil
 		}
 		time.Sleep(timeout)
 	}
 	logger.Log.Debug("poller: finish unsuccessful polling", zap.String("orderNumber", number))
+
+	err := p.repo.UpdateOrderStatusByNumber(number, repository.OrderstatusINVALID, nil)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

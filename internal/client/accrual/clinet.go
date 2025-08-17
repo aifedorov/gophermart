@@ -38,7 +38,7 @@ func (c *httpClient) GetAccrualByOrderNumber(orderNumber string) (OrderResponse,
 		logger.Log.Error("accrualclient: order processing failed", zap.Error(err))
 		return OrderResponse{}, false, err
 	}
-	if res.StatusCode() != 200 {
+	if res.StatusCode() < 200 || res.StatusCode() > 299 {
 		logger.Log.Error("accrualclient: order processing failed", zap.Int("status", res.StatusCode()))
 		return OrderResponse{}, false, nil
 	}

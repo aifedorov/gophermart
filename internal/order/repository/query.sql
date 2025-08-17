@@ -6,7 +6,8 @@ RETURNING *;
 -- name: GetTopUpOrdersByUserID :many
 SELECT *
 FROM orders
-WHERE user_id = $1;
+WHERE type = 'CREDIT'
+  AND user_id = $1;
 
 -- name: GetOrderByNumber :one
 SELECT *
@@ -21,15 +22,16 @@ SET status       = $2,
     processed_at = $4
 WHERE number = $1;
 
--- name: GetOrderByStatus :one
+-- name: GetNewTopUpOrder :one
 SELECT *
 FROM orders
-WHERE status = $1
+WHERE type = 'CREDIT'
+  AND status = 'NEW'
 LIMIT 1;
 
 -- name: Withdrawal :one
-INSERT INTO orders (user_id, number, amount, type)
-VALUES ($1, $2, $3, 'DEBIT')
+INSERT INTO orders (user_id, number, amount, type, status)
+VALUES ($1, $2, $3, 'DEBIT', 'PROCESSED')
 RETURNING *;
 
 -- name: GetWithdrawalsByUserID :many

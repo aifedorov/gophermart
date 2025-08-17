@@ -4,18 +4,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shopspring/decimal"
-	"go.uber.org/zap"
 )
 
 type Repository interface {
 	GetOrderByNumber(number string) (Order, error)
-	GetFirstOrderByStatus(status Orderstatus) (Order, error)
+	GetNewTopUpOrder() (Order, error)
 	UpdateOrderStatusByNumber(number string, status Orderstatus, amount *decimal.Decimal) error
 	GetOrdersByUserID(userID string) ([]Order, error)
 	CreateTopUpOrder(userID, orderNumber string) (Order, bool, error)
@@ -51,8 +49,8 @@ func (s *service) GetOrdersByUserID(userID string) ([]Order, error) {
 	return s.queries.GetTopUpOrdersByUserID(s.ctx, id)
 }
 
-func (s *service) GetFirstOrderByStatus(status Orderstatus) (Order, error) {
-	return s.queries.GetOrderByStatus(s.ctx, status)
+func (s *service) GetNewTopUpOrder() (Order, error) {
+	return s.queries.GetNewTopUpOrder(s.ctx)
 }
 
 func (s *service) UpdateOrderStatusByNumber(number string, status Orderstatus, amount *decimal.Decimal) error {
@@ -102,12 +100,6 @@ func (s *service) CreateWithdrawalOrder(userID, orderNumber string, amount decim
 	if err != nil {
 		return Order{}, err
 	}
-	defer func() {
-		err = tx.Rollback(s.ctx)
-		if err != nil {
-			logger.Log.Error("db: failed to rollback transaction", zap.Error(err))
-		}
-	}()
 
 	qtx := s.queries.WithTx(tx)
 	balance, err := qtx.GetUserBalanceByUserID(s.ctx, id)

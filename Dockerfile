@@ -9,6 +9,9 @@ RUN go mod download
 
 COPY . .
 
+# Create tmp directory for air
+RUN mkdir -p tmp
+
 EXPOSE 8080
 
 CMD ["air"]

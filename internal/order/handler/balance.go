@@ -1,11 +1,12 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/aifedorov/gophermart/internal/order/domain"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 func NewBalanceHandler(orderService domain.Service) http.HandlerFunc {
@@ -28,8 +29,8 @@ func NewBalanceHandler(orderService domain.Service) http.HandlerFunc {
 
 		rw.WriteHeader(http.StatusOK)
 		response := BalanceResponse{
-			Current:   balance.Current,
-			Withdrawn: balance.Withdrawn,
+			Current:   float32(balance.Current.InexactFloat64()),
+			Withdrawn: float32(balance.Withdrawn.InexactFloat64()),
 		}
 		if err := encodeJSONResponse(rw, response); err != nil {
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

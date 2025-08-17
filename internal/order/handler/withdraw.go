@@ -57,8 +57,10 @@ func NewWithdrawHandler(orderService domain.Service) http.HandlerFunc {
 		case domain.CreateStatusSuccess:
 			rw.WriteHeader(http.StatusOK)
 		case domain.CreateStatusAlreadyUploaded:
+			logger.Log.Info("order already uploaded", zap.String("order", body.Order))
 			http.Error(rw, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		default:
+			logger.Log.Error("failed to withdraw money", zap.Error(err))
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}

@@ -3,6 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	orderDomain "github.com/aifedorov/gophermart/internal/order/domain"
 	repository "github.com/aifedorov/gophermart/internal/order/repository/db"
 	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
@@ -11,10 +16,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
 )
 
 func TestWithdrawalsHandler(t *testing.T) {
@@ -45,12 +46,12 @@ func TestWithdrawalsHandler(t *testing.T) {
 	expectedResponse := []WithdrawalResponse{
 		{
 			Order:       "2377225624",
-			Sum:         decimal.NewFromInt(500),
+			Sum:         500,
 			ProcessedAt: fixedTime,
 		},
 		{
 			Order:       "1234567890",
-			Sum:         decimal.NewFromInt(250),
+			Sum:         250,
 			ProcessedAt: fixedTime,
 		},
 	}

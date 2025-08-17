@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/aifedorov/gophermart/internal/order/domain"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
-	"net/http"
-
 	"go.uber.org/zap"
 )
 

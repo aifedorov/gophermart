@@ -1,7 +1,5 @@
 package accrual
 
-import "github.com/shopspring/decimal"
-
 type Status string
 
 const (
@@ -12,7 +10,7 @@ const (
 )
 
 type OrderResponse struct {
-	Number string           `json:"number"`
-	Status Status           `json:"status"`
-	Amount *decimal.Decimal `json:"amount,omitempty"`
+	Number string   `json:"number"`
+	Status Status   `json:"status"`
+	Amount *float64 `json:"accrual,omitempty"`
 }

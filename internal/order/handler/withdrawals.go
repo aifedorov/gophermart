@@ -2,11 +2,12 @@ package handler
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/aifedorov/gophermart/internal/order/domain"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 func NewWithdrawalsHandler(userService domain.Service) http.HandlerFunc {
@@ -36,7 +37,7 @@ func NewWithdrawalsHandler(userService domain.Service) http.HandlerFunc {
 		for i, withdrawal := range withdrawals {
 			withdrawalResponses[i] = WithdrawalResponse{
 				Order:       withdrawal.OrderNumber,
-				Sum:         withdrawal.Sum,
+				Sum:         float32(withdrawal.Sum.InexactFloat64()),
 				ProcessedAt: withdrawal.ProcessedAt,
 			}
 		}

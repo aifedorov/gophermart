@@ -38,3 +38,6 @@ Thumbs.db
 
 # Logs
 *.log
+/.tools/gophermarttest
+/.tools/random
+/.tools/statictest

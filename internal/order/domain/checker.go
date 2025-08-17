@@ -46,7 +46,7 @@ func (c *checker) Run() error {
 }
 
 func (c *checker) processNewOrders() error {
-	order, err := c.repo.GetFirstOrderByStatus(repository.OrderstatusNEW)
+	order, err := c.repo.GetNewTopUpOrder()
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil
 	}

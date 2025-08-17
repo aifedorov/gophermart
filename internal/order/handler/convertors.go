@@ -2,7 +2,6 @@ package handler
 
 import (
 	"github.com/aifedorov/gophermart/internal/order/domain"
-	"github.com/shopspring/decimal"
 )
 
 func ToOrdersResponse(orders []domain.Order) []OrderResponse {
@@ -12,9 +11,10 @@ func ToOrdersResponse(orders []domain.Order) []OrderResponse {
 
 	respOrders := make([]OrderResponse, len(orders))
 	for i, o := range orders {
-		var accrual *decimal.Decimal
+		var accrual *float32
 		if o.Status == domain.StatusProcessed && o.Accrual.IsPositive() {
-			accrual = &o.Accrual
+			accrualFloat := float32(o.Accrual.InexactFloat64())
+			accrual = &accrualFloat
 		}
 
 		respOrder := OrderResponse{

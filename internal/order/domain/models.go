@@ -9,10 +9,10 @@ import (
 type Status string
 
 const (
-	StatusNew        Status = "new"
-	StatusProcessing Status = "processing"
-	StatusProcessed  Status = "processed"
-	StatusInvalid    Status = "invalid"
+	StatusNew        Status = "NEW"
+	StatusProcessing Status = "PROCESSING"
+	StatusProcessed  Status = "PROCESSED"
+	StatusInvalid    Status = "INVALID"
 )
 
 type CreateStatus int

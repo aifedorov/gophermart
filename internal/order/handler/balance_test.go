@@ -2,15 +2,16 @@ package handler
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	orderDomain "github.com/aifedorov/gophermart/internal/order/domain"
 	repository "github.com/aifedorov/gophermart/internal/order/repository/db"
 	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"github.com/shopspring/decimal"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -47,7 +48,7 @@ func TestBalanceHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				body:        `{"current":"100","withdrawn":"0"}` + "\n",
+				body:        `{"current":100,"withdrawn":0}` + "\n",
 			},
 		},
 		{
@@ -58,7 +59,7 @@ func TestBalanceHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				body:        `{"current":"0","withdrawn":"0"}` + "\n",
+				body:        `{"current":0,"withdrawn":0}` + "\n",
 			},
 		},
 		{

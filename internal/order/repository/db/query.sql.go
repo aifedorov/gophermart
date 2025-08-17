@@ -41,6 +41,30 @@ func (q *Queries) CreateTopUpOrder(ctx context.Context, arg CreateTopUpOrderPara
 	return i, err
 }
 
+const getNewTopUpOrder = `-- name: GetNewTopUpOrder :one
+SELECT id, user_id, amount, number, type, status, processed_at, created_at
+FROM orders
+WHERE type = 'CREDIT'
+  AND status = 'NEW'
+LIMIT 1
+`
+
+func (q *Queries) GetNewTopUpOrder(ctx context.Context) (Order, error) {
+	row := q.db.QueryRow(ctx, getNewTopUpOrder)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Amount,
+		&i.Number,
+		&i.Type,
+		&i.Status,
+		&i.ProcessedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getOrderByNumber = `-- name: GetOrderByNumber :one
 SELECT id, user_id, amount, number, type, status, processed_at, created_at
 FROM orders
@@ -64,33 +88,11 @@ func (q *Queries) GetOrderByNumber(ctx context.Context, number string) (Order, e
 	return i, err
 }
 
-const getOrderByStatus = `-- name: GetOrderByStatus :one
-SELECT id, user_id, amount, number, type, status, processed_at, created_at
-FROM orders
-WHERE status = $1
-LIMIT 1
-`
-
-func (q *Queries) GetOrderByStatus(ctx context.Context, status Orderstatus) (Order, error) {
-	row := q.db.QueryRow(ctx, getOrderByStatus, status)
-	var i Order
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Amount,
-		&i.Number,
-		&i.Type,
-		&i.Status,
-		&i.ProcessedAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const getTopUpOrdersByUserID = `-- name: GetTopUpOrdersByUserID :many
 SELECT id, user_id, amount, number, type, status, processed_at, created_at
 FROM orders
-WHERE user_id = $1
+WHERE type = 'CREDIT'
+  AND user_id = $1
 `
 
 func (q *Queries) GetTopUpOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]Order, error) {
@@ -197,7 +199,9 @@ func (q *Queries) GetWithdrawalsByUserID(ctx context.Context, userID uuid.UUID) 
 
 const updateOrderByNumber = `-- name: UpdateOrderByNumber :exec
 UPDATE orders
-SET status = $2, amount = $3, processed_at = $4
+SET status       = $2,
+    amount       = $3,
+    processed_at = $4
 WHERE number = $1
 `
 
@@ -219,8 +223,8 @@ func (q *Queries) UpdateOrderByNumber(ctx context.Context, arg UpdateOrderByNumb
 }
 
 const withdrawal = `-- name: Withdrawal :one
-INSERT INTO orders (user_id, number, amount, type)
-VALUES ($1, $2, $3, 'DEBIT')
+INSERT INTO orders (user_id, number, amount, type, status)
+VALUES ($1, $2, $3, 'DEBIT', 'PROCESSED')
 RETURNING id, user_id, amount, number, type, status, processed_at, created_at
 `
 
