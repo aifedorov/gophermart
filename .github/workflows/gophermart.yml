@@ -50,6 +50,15 @@ jobs:
           (cd cmd/gophermart && go build -buildvcs=false -o gophermart)
           (cd cmd/accrual && chmod +x accrual_linux_amd64)
 
+      - name: Run migrations
+        run: |
+          # Install migrate tool
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
+          sudo mv migrate /usr/local/bin/
+          
+          # Run migrations
+          migrate -path ./migrations -database "postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" up
+
       - name: Test
         run: |
           gophermarttest \
