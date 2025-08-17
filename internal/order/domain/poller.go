@@ -45,7 +45,6 @@ func (p *poller) StartPollingWithOrderNumber(number string) error {
 			logger.Log.Debug("poller: context was cancelled")
 			return p.ctx.Err()
 		default:
-			break
 		}
 
 		logger.Log.Debug("poller: star polling", zap.String("orderNumber", number))
@@ -59,7 +58,6 @@ func (p *poller) StartPollingWithOrderNumber(number string) error {
 		switch res.Status {
 		case accrual.StatusRegistered, accrual.StatusProcessing:
 			logger.Log.Debug("poller: status isn't terminated", zap.Any("order status", res.Status))
-			break
 		case accrual.StatusInvalid:
 			err := p.repo.UpdateOrderStatusByNumber(number, repository.OrderstatusINVALID, nil)
 			if err != nil {
