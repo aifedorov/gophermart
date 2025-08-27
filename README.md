@@ -1,25 +1,31 @@
 # go-musthave-diploma-tpl
 
-Шаблон репозитория для индивидуального дипломного проекта курса «Go-разработчик»
+Template repository for the individual diploma project of the **"Go Developer"** course.
 
-# Начало работы
+## Getting Started
 
-1. Склонируйте репозиторий в любую подходящую директорию на вашем компьютере.
-2. В корне репозитория выполните команду `go mod init <name>` (где `<name>` — адрес вашего репозитория на GitHub без
-   префикса `https://`) для создания модуля
+1. Clone this repository into any suitable directory on your computer.  
+2. In the root of the repository, run the command:
 
-# Обновление шаблона
+   ```bash
+   go mod init <name>
+   ```
 
-Чтобы иметь возможность получать обновления автотестов и других частей шаблона, выполните команду:
+   where `<name>` is the address of your GitHub repository without the `https://` prefix.  
+   This will initialize your project as a Go module.
 
-```
+## Updating the Template
+
+To be able to receive updates for autotests and other parts of the template, add the template repository as a remote:
+
+```bash
 git remote add -m master template https://github.com/yandex-praktikum/go-musthave-diploma-tpl.git
 ```
 
-Для обновления кода автотестов выполните команду:
+To update the autotest code, run:
 
-```
+```bash
 git fetch template && git checkout template/master .github
 ```
 
-Затем добавьте полученные изменения в свой репозиторий.
+Then commit and push the retrieved changes into your repository.
