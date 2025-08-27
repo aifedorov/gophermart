@@ -97,15 +97,7 @@ func TestWithdrawalsHandler(t *testing.T) {
 				statusCode: http.StatusNoContent,
 			},
 		},
-		{
-			name:   "unauthorized - no user id in context",
-			method: http.MethodGet,
-			mock:   func(mockRepo *orderMocks.MockRepository) {},
-			path:   "/api/user/withdrawals",
-			want: want{
-				statusCode: http.StatusUnauthorized,
-			},
-		},
+
 		{
 			name:   "internal server error - repository error",
 			method: http.MethodGet,

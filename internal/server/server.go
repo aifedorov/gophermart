@@ -1,6 +1,8 @@
 package server
 
 import (
+	"net/http"
+
 	orderDomain "github.com/aifedorov/gophermart/internal/order/domain"
 	orderHandler "github.com/aifedorov/gophermart/internal/order/handler"
 	"github.com/aifedorov/gophermart/internal/pkg/config"
@@ -11,7 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type Server struct {
@@ -49,15 +50,15 @@ func (s *Server) mountHandlers() {
 	s.router.Use(middleware.RequestLogger)
 	s.router.Use(middleware.ResponseLogger)
 
-	s.router.Post("/api/user/register", userHandler.NewRegisterHandler(s.config, s.userService))
+	s.router.Post("/api/user/register", userHandler.NewUserRegisterHandler(s.config, s.userService))
 	s.router.Post("/api/user/login", userHandler.NewLoginHandler(s.config, s.userService))
 
 	s.router.Group(func(r chi.Router) {
 		r.Use(jwtMiddleware.CheckJWT)
-		r.Post("/api/user/orders", orderHandler.NewCreateOrdersHandler(s.orderService))
-		r.Get("/api/user/orders", orderHandler.NewGetOrdersHandler(s.orderService))
-		r.Get("/api/user/balance", orderHandler.NewBalanceHandler(s.orderService))
-		r.Post("/api/user/balance/withdraw", orderHandler.NewWithdrawHandler(s.orderService))
-		r.Get("/api/user/withdrawals", orderHandler.NewWithdrawalsHandler(s.orderService))
+		r.Post("/api/user/orders", jwtMiddleware.RequireAuth(orderHandler.NewCreateOrdersHandler(s.orderService)))
+		r.Get("/api/user/orders", jwtMiddleware.RequireAuth(orderHandler.NewGetOrdersHandler(s.orderService)))
+		r.Get("/api/user/balance", jwtMiddleware.RequireAuth(orderHandler.NewBalanceHandler(s.orderService)))
+		r.Post("/api/user/balance/withdraw", jwtMiddleware.RequireAuth(orderHandler.NewWithdrawHandler(s.orderService)))
+		r.Get("/api/user/withdrawals", jwtMiddleware.RequireAuth(orderHandler.NewWithdrawalsHandler(s.orderService)))
 	})
 }

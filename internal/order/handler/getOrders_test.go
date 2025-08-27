@@ -2,14 +2,15 @@ package handler
 
 import (
 	"context"
-	"github.com/aifedorov/gophermart/internal/order/domain"
-	"github.com/aifedorov/gophermart/internal/order/repository/db"
-	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
-	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/aifedorov/gophermart/internal/order/domain"
+	repository "github.com/aifedorov/gophermart/internal/order/repository/db"
+	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
+	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -46,14 +47,6 @@ func TestGetOrdersHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-			},
-		},
-		{
-			name:   "unauthorized - no user id in context",
-			method: http.MethodGet,
-			path:   "/api/user/orders",
-			want: want{
-				statusCode: http.StatusUnauthorized,
 			},
 		},
 	}

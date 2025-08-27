@@ -62,23 +62,6 @@ func TestBalanceHandler(t *testing.T) {
 				body:        `{"current":0,"withdrawn":0}` + "\n",
 			},
 		},
-		{
-			name:   "unauthorized - no user id in context",
-			method: http.MethodGet,
-			path:   "/api/user/balance",
-			want: want{
-				statusCode: http.StatusUnauthorized,
-			},
-		},
-		{
-			name:   "unauthorized - empty user id",
-			method: http.MethodGet,
-			path:   "/api/user/balance",
-			userID: "",
-			want: want{
-				statusCode: http.StatusUnauthorized,
-			},
-		},
 	}
 
 	for _, tt := range tests {

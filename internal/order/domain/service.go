@@ -9,7 +9,7 @@ import (
 )
 
 type Service interface {
-	CreateOrder(userID, number string) (Order, CreateStatus, error)
+	CreateOrder(userID, number string) (*Order, CreateStatus, error)
 	GetUserOrders(userID string) ([]Order, error)
 	GetUserBalance(userID string) (Balance, error)
 	Withdraw(userID, orderNumber string, amount decimal.Decimal) (Withdrawal, CreateStatus, error)
@@ -25,24 +25,24 @@ func NewService(repo repository.Repository) Service {
 	}
 }
 
-func (s *service) CreateOrder(userID, number string) (Order, CreateStatus, error) {
+func (s *service) CreateOrder(userID, number string) (*Order, CreateStatus, error) {
 	if !IsValidOrderNumber(number) {
-		return Order{}, CreateStatusFailed, ErrInvalidOrderNumber
+		return nil, CreateStatusFailed, ErrInvalidOrderNumber
 	}
 
 	dbOrder, isCreated, err := s.repo.CreateTopUpOrder(userID, number)
 	if err != nil {
-		return Order{}, CreateStatusFailed, fmt.Errorf("orderservice: failed to create order: %w", err)
+		return nil, CreateStatusFailed, fmt.Errorf("orderservice: failed to create order: %w", err)
 	}
 
 	domainOrder := convertOrderToDomain(dbOrder)
 	if !isCreated {
 		if dbOrder.UserID.String() == userID {
-			return domainOrder, CreateStatusAlreadyUploaded, nil
+			return &domainOrder, CreateStatusAlreadyUploaded, nil
 		}
-		return domainOrder, CreateStatusUploadedByAnotherUser, nil
+		return &domainOrder, CreateStatusUploadedByAnotherUser, nil
 	}
-	return domainOrder, CreateStatusSuccess, nil
+	return &domainOrder, CreateStatusSuccess, nil
 }
 
 func (s *service) GetUserOrders(userID string) ([]Order, error) {

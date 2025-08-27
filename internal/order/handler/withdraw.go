@@ -23,13 +23,7 @@ func NewWithdrawHandler(orderService domain.Service) http.HandlerFunc {
 			return
 		}
 
-		userID, err := middleware.GetUserID(req)
-		if err != nil {
-			logger.Log.Info("user not authenticated", zap.Error(err))
-			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
-
+		userID, _ := middleware.GetUserID(req)
 		if !domain.IsValidOrderNumber(body.Order) {
 			logger.Log.Info("invalid order number", zap.String("order", body.Order))
 			http.Error(rw, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)

@@ -3,15 +3,16 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	orderDomain "github.com/aifedorov/gophermart/internal/order/domain"
 	repository "github.com/aifedorov/gophermart/internal/order/repository/db"
 	orderMocks "github.com/aifedorov/gophermart/internal/order/repository/mocks"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"github.com/shopspring/decimal"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -77,19 +78,7 @@ func TestWithdrawHandler(t *testing.T) {
 					Times(1)
 			},
 		},
-		{
-			name:   "unauthorized - no user id in context",
-			method: http.MethodPost,
-			path:   "/api/user/balance/withdraw",
-			request: WithdrawRequest{
-				Order: testOrderNumber,
-				Sum:   decimal.NewFromInt(100),
-			},
-			want: want{
-				statusCode: http.StatusUnauthorized,
-			},
-			mock: func(mockRepo *orderMocks.MockRepository) {},
-		},
+
 		{
 			name:   "insufficient funds	- amount more then balance",
 			method: http.MethodPost,

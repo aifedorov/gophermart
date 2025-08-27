@@ -2,13 +2,14 @@ package handler
 
 import (
 	"errors"
-	"github.com/aifedorov/gophermart/internal/user/domain"
-	repository "github.com/aifedorov/gophermart/internal/user/repository/db"
-	userMocks "github.com/aifedorov/gophermart/internal/user/repository/mocks"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/aifedorov/gophermart/internal/user/domain"
+	repository "github.com/aifedorov/gophermart/internal/user/repository/db"
+	userMocks "github.com/aifedorov/gophermart/internal/user/repository/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -22,7 +23,7 @@ func TestRegisterHandler(t *testing.T) {
 
 	repo := newMockStorageForRegister(ctrl)
 	userService := domain.NewService(repo)
-	handlerFunc := NewRegisterHandler(newMockConfig(), userService)
+	handlerFunc := NewUserRegisterHandler(newMockConfig(), userService)
 
 	type want struct {
 		contentType string

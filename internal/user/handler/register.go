@@ -2,16 +2,17 @@ package handler
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/aifedorov/gophermart/internal/pkg/config"
 	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"github.com/aifedorov/gophermart/internal/pkg/middleware"
 	"github.com/aifedorov/gophermart/internal/user/domain"
-	"net/http"
 
 	"go.uber.org/zap"
 )
 
-func NewRegisterHandler(cfg config.Config, userService domain.Service) http.HandlerFunc {
+func NewUserRegisterHandler(cfg config.Config, userService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 

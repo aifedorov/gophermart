@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/aifedorov/gophermart/internal/pkg/logger"
 	"net/http"
 	"time"
+
+	"github.com/aifedorov/gophermart/internal/pkg/logger"
 
 	"github.com/golang-jwt/jwt/v4"
 	"go.uber.org/zap"
@@ -57,6 +58,18 @@ func (m *JWTMiddleware) CheckJWT(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func (m *JWTMiddleware) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		_, err := GetUserID(r)
+		if err != nil {
+			logger.Log.Info("user not authenticated", zap.Error(err))
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
 }
 
 func SetNewAuthCookies(userID, secretKey string, w http.ResponseWriter) {

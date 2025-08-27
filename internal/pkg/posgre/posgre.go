@@ -1,27 +1,28 @@
-package posgres
+package posgre
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const defaultDBTimeout = 3 * time.Second
 
-type PostgresRepository struct {
+type PostgreRepository struct {
 	dbPool *pgxpool.Pool
 	ctx    context.Context
 	dsn    string
 }
 
-func NewPosgresRepository(ctx context.Context, dsn string) *PostgresRepository {
-	return &PostgresRepository{
+func NewPosgresRepository(ctx context.Context, dsn string) *PostgreRepository {
+	return &PostgreRepository{
 		ctx: ctx,
 		dsn: dsn,
 	}
 }
 
-func (p *PostgresRepository) Open() error {
+func (p *PostgreRepository) Open() error {
 	ctx, cancel := context.WithTimeout(p.ctx, defaultDBTimeout)
 	defer cancel()
 
@@ -39,10 +40,10 @@ func (p *PostgresRepository) Open() error {
 	return nil
 }
 
-func (p *PostgresRepository) Close() {
+func (p *PostgreRepository) Close() {
 	p.dbPool.Close()
 }
 
-func (p *PostgresRepository) DBPool() *pgxpool.Pool {
+func (p *PostgreRepository) DBPool() *pgxpool.Pool {
 	return p.dbPool
 }

@@ -14,13 +14,7 @@ func NewWithdrawalsHandler(userService domain.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 
-		userID, err := middleware.GetUserID(req)
-		if err != nil {
-			logger.Log.Info("user not authenticated", zap.Error(err))
-			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
-
+		userID, _ := middleware.GetUserID(req)
 		withdrawals, err := userService.GetWithdrawals(userID)
 		if err != nil {
 			logger.Log.Error("failed to get withdrawals", zap.Error(err))
