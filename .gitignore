@@ -21,3 +21,23 @@ vendor/
 # IDEs directories
 .idea
 .vscode
+
+# Claude Code directory
+.claude
+
+# Air temporary files
+tmp/
+build-errors.log
+
+# Environment variables
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/.tools/gophermarttest
+/.tools/random
+/.tools/statictest

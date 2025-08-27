@@ -1,0 +1,61 @@
+package handler
+
+import (
+	"errors"
+
+	"github.com/aifedorov/gophermart/internal/order/domain"
+	"github.com/aifedorov/gophermart/internal/pkg/logger"
+	"github.com/aifedorov/gophermart/internal/pkg/middleware"
+
+	"net/http"
+
+	"go.uber.org/zap"
+)
+
+func NewWithdrawHandler(orderService domain.Service) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+
+		body, err := decodeWithdraw(req)
+		if err != nil {
+			logger.Log.Info("failed to decode request", zap.Error(err))
+			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		userID, _ := middleware.GetUserID(req)
+		if !domain.IsValidOrderNumber(body.Order) {
+			logger.Log.Info("invalid order number", zap.String("order", body.Order))
+			http.Error(rw, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+			return
+		}
+
+		_, status, err := orderService.Withdraw(userID, body.Order, body.Sum)
+		if errors.Is(err, domain.ErrWithdrawNegativeAmount) {
+			logger.Log.Info("negative amount of money to withdraw")
+			http.Error(rw, http.StatusText(http.StatusPaymentRequired), http.StatusPaymentRequired)
+			return
+		}
+		if errors.Is(err, domain.ErrWithdrawInsufficientFunds) {
+			logger.Log.Info("insufficient funds to withdraw")
+			http.Error(rw, http.StatusText(http.StatusPaymentRequired), http.StatusPaymentRequired)
+			return
+		}
+		if err != nil {
+			logger.Log.Error("failed to withdraw money", zap.Error(err))
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		switch status {
+		case domain.CreateStatusSuccess:
+			rw.WriteHeader(http.StatusOK)
+		case domain.CreateStatusAlreadyUploaded:
+			logger.Log.Info("order already uploaded", zap.String("order", body.Order))
+			http.Error(rw, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		default:
+			logger.Log.Error("failed to withdraw money", zap.Error(err))
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+	}
+}

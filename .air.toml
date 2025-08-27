@@ -1,0 +1,26 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+bin = "./tmp/main"
+cmd = "go build -buildvcs=false -o ./tmp/main ./cmd/gophermart"
+exclude_dir = ["tmp", "vendor", "migrations"]
+include_ext = ["go"]
+include_file = []
+kill_delay = "0s"
+restart_delay = "1s"
+send_interrupt = false
+stop_on_root = false
+
+[color]
+app = "green"
+build = "blue"
+main = "magenta"
+runner = "green"
+watcher = "cyan"
+
+[log]
+time = true
+
+[misc]
+clean_on_exit = false

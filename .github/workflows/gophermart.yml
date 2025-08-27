@@ -12,7 +12,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    container: golang:1.23
+    container: golang:1.24.1
 
     services:
       postgres:
@@ -49,6 +49,15 @@ jobs:
         run: |
           (cd cmd/gophermart && go build -buildvcs=false -o gophermart)
           (cd cmd/accrual && chmod +x accrual_linux_amd64)
+
+      - name: Run migrations
+        run: |
+          # Install migrate tool
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
+          mv migrate /usr/local/bin/
+          
+          # Run migrations
+          migrate -path ./migrations -database "postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" up
 
       - name: Test
         run: |
