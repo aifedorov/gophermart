@@ -10,7 +10,7 @@ test:
 	go test ./...
 
 run:
-	air
+	(cd cmd/gophermart && go run main.go)
 
 docker-up:
 	docker-compose up --build

@@ -1,31 +1,168 @@
-# go-musthave-diploma-tpl
+# Gophermart - Loyalty System
 
-Template repository for the individual diploma project of the **"Go Developer"** course.
+An educational project demonstrating real-world Go development patterns and libraries used in production services, implementing clean architecture principles and modern software engineering practices.
 
-## Getting Started
+## 🚀 Overview
 
-1. Clone this repository into any suitable directory on your computer.  
-2. In the root of the repository, run the command:
+Gophermart is a microservices-based loyalty system that enables users to:
+- Register and authenticate securely
+- Submit order numbers for loyalty point accrual
+- Track order processing status in real-time
+- Manage loyalty balance and transactions
+- Withdraw points for order payments
 
-   ```bash
-   go mod init <name>
-   ```
+## 🛠 Technology Stack
 
-   where `<name>` is the address of your GitHub repository without the `https://` prefix.  
-   This will initialize your project as a Go module.
+### Core Technologies
+- **Go 1.24.1** - Primary programming language
+- **Chi Router** - High-performance HTTP router for REST API
+- **PostgreSQL** - Primary database with ACID compliance
+- **JWT** - Stateless authentication and authorization
+- **Docker & Docker Compose** - Containerization and orchestration
 
-## Updating the Template
+### Architecture & Design Patterns
+- **Clean Architecture** - Layered separation of concerns (handler, service, repository)
+- **Domain-Driven Design** - Business logic encapsulated in domain models
+- **Repository Pattern** - Data access abstraction layer
+- **Dependency Injection** - Loose coupling through interface-based design
+- **Middleware Pattern** - Cross-cutting concerns via request interceptors
 
-To be able to receive updates for autotests and other parts of the template, add the template repository as a remote:
+### Development Tools
+- **SQLC** - Type-safe SQL code generation
+- **Golang Migrate** - Database schema versioning
+- **Testify** - Comprehensive testing framework
+- **Uber Mock** - Interface mocking for unit tests
+- **Zap** - High-performance structured logging
 
-```bash
-git remote add -m master template https://github.com/yandex-praktikum/go-musthave-diploma-tpl.git
+### DevOps & CI/CD
+- **GitHub Actions** - Automated CI/CD pipeline
+- **Docker** - Application containerization
+- **Makefile** - Build and test automation
+
+## 🏗 System Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   HTTP Client   │    │   Gophermart    │    │   Accrual       │
+│                 │◄──►│   (Main API)    │◄──►│   (External)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                       ┌─────────────────┐
+                       │   PostgreSQL    │
+                       │   Database      │
+                       └─────────────────┘
 ```
 
-To update the autotest code, run:
+### Core Components
+- **HTTP Handlers** - REST API request processing
+- **Domain Services** - Business logic implementation
+- **Repository Layer** - Data persistence abstraction
+- **External Client** - Third-party service integration
+- **Background Workers** - Asynchronous order processing
+
+## 📋 API Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/user/register` | User registration | ❌ No |
+| POST | `/api/user/login` | User authentication | ❌ No |
+| POST | `/api/user/orders` | Order number submission | ✅ Yes |
+| GET | `/api/user/orders` | User order history | ✅ Yes |
+| GET | `/api/user/balance` | Current balance | ✅ Yes |
+| POST | `/api/user/balance/withdraw` | Points withdrawal | ✅ Yes |
+| GET | `/api/user/withdrawals` | Withdrawal history | ✅ Yes |
+
+## 🧪 Testing Strategy
+
+Comprehensive testing approach ensuring code quality and reliability:
+- **Unit Tests** - Individual component testing with mocks
+- **Integration Tests** - Cross-layer interaction validation
+- **Mock Tests** - Dependency isolation and behavior verification
+- **Automated Tests** - API contract testing and validation
 
 ```bash
-git fetch template && git checkout template/master .github
+# Run all tests
+make test
+
+# Run automated test suite
+make run-autotests
 ```
 
-Then commit and push the retrieved changes into your repository.
+## 🚀 Getting Started
+
+### Local Development
+```bash
+# Clone repository
+git clone <repository-url>
+cd gophermart
+
+# Start with Docker Compose
+make docker-up
+
+# Or run locally
+make run
+```
+
+### Environment Configuration
+```bash
+RUN_ADDRESS=localhost:8080
+DATABASE_URI=postgres://user:password@localhost:5432/gophermart
+ACCRUAL_SYSTEM_ADDRESS=http://localhost:8084
+SECRET_KEY=your-secret-key
+```
+
+## 📊 Engineering Excellence
+
+### Backend Development
+- ✅ RESTful API design and implementation
+- ✅ PostgreSQL integration with migrations
+- ✅ JWT-based authentication and authorization
+- ✅ Data validation and error handling
+- ✅ Structured logging and observability
+
+### Software Architecture
+- ✅ Clean Architecture principles
+- ✅ Domain-Driven Design patterns
+- ✅ Repository pattern implementation
+- ✅ Dependency injection framework
+- ✅ Middleware-based request processing
+
+### Quality Assurance
+- ✅ Unit testing with comprehensive coverage
+- ✅ Integration testing for system components
+- ✅ Mock-based testing for isolated validation
+- ✅ Automated testing pipeline
+
+### DevOps & Infrastructure
+- ✅ Docker containerization
+- ✅ CI/CD with GitHub Actions
+- ✅ Build and deployment automation
+- ✅ Infrastructure as Code practices
+
+### Go Ecosystem Mastery
+- ✅ Production-grade Go libraries (Chi, JWT, Zap)
+- ✅ SQLC for type-safe database operations
+- ✅ Go best practices and idiomatic code
+- ✅ Concurrent programming with goroutines
+
+## 📁 Project Structure
+
+```
+gophermart/
+├── cmd/                    # Application entry points
+├── internal/               # Private application code
+│   ├── user/              # User domain module
+│   ├── order/             # Order domain module
+│   ├── client/            # HTTP client implementations
+│   ├── pkg/               # Shared packages
+│   └── server/            # HTTP server configuration
+├── migrations/            # Database migrations
+├── docker-compose.yml     # Docker environment
+└── Makefile              # Build automation
+```
+
+## 🔗 Documentation
+
+- [Technical Specification](SPECIFICATION.md)
+- [API Documentation](SPECIFICATION.md#http-api-summary)
