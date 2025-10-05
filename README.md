@@ -33,6 +33,7 @@ Gophermart is a microservices-based loyalty system that enables users to:
 - **Testify** - Comprehensive testing framework
 - **Uber Mock** - Interface mocking for unit tests
 - **Zap** - High-performance structured logging
+- **Static Linter** - Custom static analysis tool combining staticcheck, simple, errcheck, and ineffassign
 
 ### DevOps & CI/CD
 - **GitHub Actions** - Automated CI/CD pipeline
@@ -85,6 +86,9 @@ Comprehensive testing approach ensuring code quality and reliability:
 # Run all tests
 make test
 
+# Run static code analysis
+make lint
+
 # Run automated test suite
 make run-autotests
 ```
@@ -132,6 +136,7 @@ SECRET_KEY=your-secret-key
 - ✅ Unit testing with comprehensive coverage
 - ✅ Integration testing for system components
 - ✅ Mock-based testing for isolated validation
+- ✅ Static code analysis with custom linter
 - ✅ Automated testing pipeline
 
 ### DevOps & Infrastructure
@@ -161,8 +166,3 @@ gophermart/
 ├── docker-compose.yml     # Docker environment
 └── Makefile              # Build automation
 ```
-
-## 🔗 Documentation
-
-- [Technical Specification](SPECIFICATION.md)
-- [API Documentation](SPECIFICATION.md#http-api-summary)

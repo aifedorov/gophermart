@@ -1,4 +1,4 @@
-.PHONY: build test run docker-up docker-down run-autotests lint local-tests
+.PHONY: build test run docker-up docker-down run-autotests lint local-tests staticlint
 
 build:
 	@echo "Building gophermart..."
@@ -35,6 +35,6 @@ local-tests:
 	@echo "Running local unit tests..."
 	go test ./...
 
-lint: build
-	@echo "Running linter..."
-	go vet -vettool=$(PWD)/.tools/statictest ./...
+lint:
+	@echo "Running staticlint..."
+	go run cmd/staticlint/main.go ./...
